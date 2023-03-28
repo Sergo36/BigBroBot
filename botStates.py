@@ -1,5 +1,7 @@
 from aiogram.filters.state import State, StatesGroup
 
+
 class States(StatesGroup):
-    choosing_nodes = State()
-    choosing_food_size = State()
+    active = State()
+    choosing_nodes_type = State()
+    implement_node = State()
