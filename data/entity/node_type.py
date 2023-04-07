@@ -6,3 +6,4 @@ class NodeType(Enum):
     Shardeum = 2
     Guild = 3
     Gravity_Bridge = 4
+    Muon = 5

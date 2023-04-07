@@ -6,3 +6,5 @@ class Node:
     owner: int
     type: int
     payment_date: datetime
+    cost: float
+    server_ip: str

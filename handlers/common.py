@@ -13,8 +13,10 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
         text="Choose actions:"
-             "list nodes (/nodes)"
-             "payments history (/payments)",
+             "muon verification (/muon) \n\n",
+             #"list nodes (/nodes) \n\n"
+             #"payments history (/payments) \n\n"
+             #"transaction history (/transaction) \n\n",
         reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(States.active)
@@ -40,7 +42,9 @@ async def cmd_id(message: Message):
     await message.answer(text=user.id)
     await message.answer(text=user.telegram_name)
 
-@router.message(Command(commands=["nodestest"]))
-async def cmd_id(message: Message):
-    nodes = getNodes(1)
-    c = 5
+@router.message(
+    States.active,
+    Command(commands=["muon"]))
+async def muon_verification(message: Message, state: FSMContext):
+    await message.answer(text="Введите значение DISCORD_VERIFICATION")
+    await state.set_state(States.muonVerification)

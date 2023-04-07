@@ -20,7 +20,7 @@ async def nodes(message: Message, state: FSMContext):
     kb_nodes = list(map(lambda n: NodeType(n.type).name, user_nodes))
     keyboard = getKeyboardFromNodes(kb_nodes)
     await message.answer("Choose node type", reply_markup=keyboard)
-    await state.set_state(States.choosing_nodes_type)
+    await state.set_state(States.nodes)
 
 
 @router.message(Text(text="Clear", ignore_case=True))

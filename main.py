@@ -3,7 +3,7 @@ import logging
 import asyncio
 
 from aiogram import Bot, Dispatcher
-from handlers import nodesList, nodesInstance, common
+from handlers import nodesList, nodesInstance, common, transaction, muonVerefication
 # log
 logging.basicConfig(level=logging.INFO)
 
@@ -13,8 +13,10 @@ async def main():
     dp = Dispatcher()
 
     dp.include_routers(common.router)
-    dp.include_routers(nodesList.router)
-    dp.include_routers(nodesInstance.router)
+    #dp.include_routers(nodesList.router)
+    #dp.include_routers(nodesInstance.router)
+    #dp.include_routers(transaction.router)
+    dp.include_routers(muonVerefication.router)
 
     await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot)
