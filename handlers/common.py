@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 from data.database import get_user, getNodes
 from botStates import States
+from data.database import get_user_by_tn
 
 router = Router()
 
@@ -11,6 +12,13 @@ router = Router()
 @router.message(Command(commands=["start"]))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
+
+    user = get_user_by_tn(message.from_user.username)
+
+    if user is None:
+        await message.answer(text="User is not found\n\n Seek help from https://t.me/repinSS or https://t.me/sirvmasle")
+        return
+
     await message.answer(
         text="Choose actions:"
              "muon verification (/muon) \n\n",

@@ -34,18 +34,18 @@ def get_user(tid):
     return res
 
 
-def get_user_by_tn(tn):
-    res = User()
+def get_user_by_tn(tn) -> User:
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE telegram_name = %(tn)s", {'tn': tn})
-            temp = cursor.fetchone()
-            res.id = temp[0]
-            res.telegram_id = temp[1]
-            res.telegram_name = temp[2]
+            sql_res = cursor.fetchone()
     conn.close()
-    return res
+
+    if sql_res is None:
+        return
+    else:
+        return User(sql_res)
 
 
 def getNodes(user_id):
