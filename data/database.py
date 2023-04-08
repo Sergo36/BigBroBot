@@ -38,7 +38,7 @@ def get_user_by_tn(tn) -> User:
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE telegram_name = %(tn)s", {'tn': tn})
+            cursor.execute("SELECT * FROM users WHERE lower(telegram_name) = LOWER(%(tn)s)", {'tn': tn})
             sql_res = cursor.fetchone()
     conn.close()
 
