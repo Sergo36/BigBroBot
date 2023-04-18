@@ -2,11 +2,9 @@ from enum import Enum
 
 
 class NodeType(Enum):
-    Sui = 1
-    Shardeum = 2
-    Guild = 3
-    Gravity_Bridge = 4
-    Muon = 5
+    Shardeum = 1
+    EYWA = 2
+    Muon = 3
 
 
 class NodeTypeClass():
