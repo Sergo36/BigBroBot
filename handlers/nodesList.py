@@ -11,7 +11,7 @@ from data.entity.node_type import NodeType
 router = Router()
 
 
-@router.message(States.authorized, Command('nodes'))
+@router.message(Command('nodes'))
 async def nodes(message: Message, state: FSMContext):
     data = await state.get_data()
     user = data.get('user')

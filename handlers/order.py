@@ -18,8 +18,7 @@ from keyboards.for_questions import get_keyboard_for_node_type, get_keyboard_for
 router = Router()
 
 
-@router.message(States.authorized, Command('order'))
-@router.message(States.nodes, Command('order'))
+@router.message(Command('order'))
 async def order(message: Message, state: FSMContext):
     text = "Сhoose node type\n"
     keyboard = get_keyboard_for_node_type([e.name for e in NodeType])

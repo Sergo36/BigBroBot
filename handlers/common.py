@@ -1,16 +1,16 @@
 from aiogram import Router
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from data.database import get_user, getNodes
 from botStates import States
 from data.database import set_user
+from keyboards.for_questions import get_keyboard_for_actions
 
 router = Router()
 
 
 @router.message(Command(commands=["start"]))
-@router.message(Command(commands=["menu"]))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     user = get_user(message.from_user.id)
@@ -22,14 +22,18 @@ async def cmd_start(message: Message, state: FSMContext):
         await state.update_data(user=user)
 
     await message.answer(
-        text="Choose actions:"
-             "List nodes (/nodes) \n"
-             "Order node (/order) \n",
+        text="Hi i'm a bot from BigBro team",
         reply_markup=ReplyKeyboardRemove()
     )
+
+    # keyboard = get_keyboard_for_actions(['Nodes', 'Order'])
+    # await message.answer(
+    #     text="Choose actions:"
+    #          "List nodes (/nodes) \n"
+    #          "Order node (/order) \n",
+    #     reply_markup=keyboard
+    # )
     await state.set_state(States.authorized)
-
-
 
 
 @router.message(Command(commands=["cancel"]))

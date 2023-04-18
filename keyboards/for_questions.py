@@ -43,3 +43,12 @@ def get_keyboard_for_accept() -> ReplyKeyboardMarkup:
     kb.button(text="Cancel")
     kb.adjust(1, 1)
     return kb.as_markup(resize_keyboard=True)
+
+
+def get_keyboard_for_actions(actions_list: list) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardBuilder()
+    for action in actions_list:
+        kb.button(text=action)
+    kb.button(text="Cancel")
+    kb.adjust(len(actions_list), 1)
+    return kb.as_markup(resize_keyboard=True)
