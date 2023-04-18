@@ -1,7 +1,9 @@
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import *
+from aiogram.enums.parse_mode import ParseMode
 
+from aiogram.types.message import Message
 import psycopg2
 from aiogram import Router, F
 from aiogram.filters import Text
@@ -57,10 +59,11 @@ async def payment(message: Message, state: FSMContext):
     data = await state.get_data()
     node = data.get('node')
 
-    text = f'To pay, transfer {node.cost} USDT to {wallet_address}\n\n' \
-           f'After confirming the transaction, send the hash of the transaction'
+    text = f"To pay, transfer `{node.cost}` USDT in BEP20 chain to `{wallet_address}`\n\n" \
+            f"After confirming the transaction, send the hash of the transaction\n"
     await message.answer(
         text=text,
+        parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=ReplyKeyboardRemove()
     )
 
