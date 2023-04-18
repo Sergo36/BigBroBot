@@ -4,34 +4,36 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 from data.database import get_user, getNodes
 from botStates import States
-from data.database import get_user_by_tn
+from data.database import set_user
 
 router = Router()
 
 
 @router.message(Command(commands=["start"]))
+@router.message(Command(commands=["menu"]))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
-
-    user = get_user_by_tn(message.from_user.username)
+    user = get_user(message.from_user.id)
 
     if user is None:
-        await message.answer(text="User is not found\n\n Seek help from https://t.me/repinSS or https://t.me/sirvmasle")
-        return
+        user = set_user(message.from_user.id, message.from_user.username)
+        await state.update_data(user=user)
+    else:
+        await state.update_data(user=user)
 
     await message.answer(
         text="Choose actions:"
-             "muon verification (/muon) \n\n",
-             #"list nodes (/nodes) \n\n"
-             #"payments history (/payments) \n\n"
-             #"transaction history (/transaction) \n\n",
+             "List nodes (/nodes) \n"
+             "Order node (/order) \n",
         reply_markup=ReplyKeyboardRemove()
     )
-    await state.set_state(States.active)
+    await state.set_state(States.authorized)
+
+
 
 
 @router.message(Command(commands=["cancel"]))
-#@router.message(Text(text="cancel", text_ignore_case=True))
+@router.message(Text(text="cancel", ignore_case=True))
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
@@ -39,20 +41,10 @@ async def cmd_cancel(message: Message, state: FSMContext):
         reply_markup=ReplyKeyboardRemove()
     )
 
-@router.message(Command(commands=["id"]))
-async def cmd_id(message: Message):
-    await message.answer(text=message.from_user.username)
-    await message.answer(text=message.from_user.id)
-
-@router.message(Command(commands=["datatest"]))
-async def cmd_id(message: Message):
-    user = get_user(message.from_user.id)
-    await message.answer(text=user.id)
-    await message.answer(text=user.telegram_name)
-
-@router.message(
-    States.active,
-    Command(commands=["muon"]))
-async def muon_verification(message: Message, state: FSMContext):
-    await message.answer(text="Введите значение DISCORD_VERIFICATION")
-    await state.set_state(States.muonVerification)
+#to do move node type handler
+#@router.message(
+ #   States.authorized,
+  #  Command(commands=["muon"]))
+#async def muon_verification(message: Message, state: FSMContext):
+ #   await message.answer(text="Введите значение DISCORD_VERIFICATION")
+  #  await state.set_state(States.muonVerification)

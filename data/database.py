@@ -3,8 +3,7 @@ from datetime import datetime
 from data.entity.user import User
 from data.entity.node import Node
 from data.entity.transaction import Transaction
-from data.entity.payment import Payment
-from data.entity.payment_type import PaymentType
+from  data.entity.node_type import NodeTypeClass
 
 
 def create_conn():
@@ -21,17 +20,16 @@ def create_conn():
 # conn.close()
 
 def get_user(tid):
-    res = User()
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM users WHERE telegram_id = %(tid)s", {'tid': tid})
-            temp = cursor.fetchone()
-            res.id = temp[0]
-            res.telegram_id = temp[1]
-            res.telegram_name = temp[2]
+            sql_res = cursor.fetchone()
     conn.close()
-    return res
+    if sql_res is None:
+        return
+    else:
+        return User(sql_res)
 
 
 def get_user_by_tn(tn) -> User:
@@ -46,6 +44,19 @@ def get_user_by_tn(tn) -> User:
         return
     else:
         return User(sql_res)
+
+def set_user(t_id, t_username) -> User:
+    conn = create_conn()
+    with conn:
+        with conn.cursor() as cursor:
+            sql = """
+                INSERT INTO public.users(
+	            telegram_id, telegram_name)
+	            VALUES (%(t_id)s, %(t_username)s)"""
+            cursor.execute(sql, {'t_id': t_id, 't_username': t_username})
+    conn.close()
+    return get_user(t_id)
+
 
 
 def getNodes(user_id):
@@ -72,22 +83,18 @@ def getNodes(user_id):
 
 
 def get_node(node_id):
-    res = Node()
+    res: Node
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
             sql = """
-                    SELECT id, owner, type, payment_date, cost
+                    SELECT id, owner, type, payment_date, cost, server_ip
                     FROM public.nodes
                     WHERE id = %(node_id)s"""
             cursor.execute(sql, {'node_id': node_id})
 
             sql_res = cursor.fetchone()
-            res.id = sql_res[0]
-            res.owner = sql_res[1]
-            res.type = sql_res[2]
-            res.payment_date = sql_res[3]
-            res.cost = sql_res[4]
+            res = Node().initialisation_sql(sql_res)
     conn.close()
     return res
 
@@ -121,20 +128,14 @@ def get_transactions(user_id):
     with conn:
         with conn.cursor() as cursor:
             sql = """
-                SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, status, owner, value, payments_id
+                SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, status, owner, value, node_id
 	            FROM public.transaction
                 WHERE owner = %(owner)s"""
             cursor.execute(sql, {'owner': user_id})
 
             sql_res = cursor.fetchall()
             for row in sql_res:
-                temp_transaction = Transaction()
-                temp_transaction.transaction_hash = row[0]
-                temp_transaction.block_hash = row[1]
-                temp_transaction.block_number = row[2]
-                temp_transaction.transaction_from = row[3]
-                temp_transaction.transaction_to = row[3]
-                temp_transaction.status = row[4]
+                temp_transaction = Transaction().initialisation_sql(row)
                 res.append(temp_transaction)
     conn.close()
     return res
@@ -159,46 +160,7 @@ def get_payment_data():
     return res
 
 
-def get_last_not_paid_payment(user_id, node_id) -> Payment:
-    conn = create_conn()
-    with conn:
-        with conn.cursor() as cursor:
-            sql = """
-            SELECT id, node_id, user_id, status, date
-	        FROM public.payments
-	        WHERE user_id = %(user_id)s AND node_id = %(node_id)s AND Status <> %(status)s
-	        ORDER BY date DESC
-	        LIMIT 1"""
-
-            cursor.execute(sql, {'user_id': user_id, "node_id": node_id, "status": PaymentType.Paid.value})
-            sql_res = cursor.fetchone()
-
-    conn.close()
-
-    if sql_res is None:
-        return
-    else:
-        return Payment(sql_res)
-
-
-def create_new_payment(user_id, node_id) -> Payment:
-    conn = create_conn()
-    with conn:
-        with conn.cursor() as cursor:
-            sql = """
-                INSERT INTO public.payments(
-	            node_id, user_id, status, date)
-	            VALUES (%(node_id)s, %(user_id)s, %(status)s, %(date)s)"""
-
-            cursor.execute(sql, {
-                'user_id': user_id,
-                "node_id": node_id,
-                "status": PaymentType.NotPaid.value,
-                "date": datetime.now()})
-    conn.close()
-    return get_last_not_paid_payment(user_id, node_id)
-
-def set_transaction(trn: Transaction, user: User, payment: Payment):
+def set_transaction(trn: Transaction, user: User, node: Node):
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
@@ -212,7 +174,7 @@ def set_transaction(trn: Transaction, user: User, payment: Payment):
 	                    status, 
 	                    owner, 
 	                    value, 
-	                    payment_id)
+	                    node_id)
 	                VALUES (
 	                    %(t_hash)s, 
 	                    %(b_hash)s,
@@ -222,7 +184,7 @@ def set_transaction(trn: Transaction, user: User, payment: Payment):
 	                    %(status)s, 
 	                    %(owner)s, 
 	                    %(value)s, 
-	                    %(payment)s);"""
+	                    %(node)s);"""
 
             cursor.execute(sql, {
                 't_hash': trn.transaction_hash,
@@ -233,8 +195,27 @@ def set_transaction(trn: Transaction, user: User, payment: Payment):
                 'status': True, # to do add request status
                 'owner': user.id,
                 'value': trn.value,
-                'payment': payment.id})
+                'node': node.id})
     conn.close()
+
+
+def get_transaction_for_node(node: Node) -> []:
+    res = []
+    conn = create_conn()
+    with conn:
+        with conn.cursor() as cursor:
+            sql = """
+                SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, transaction.status, owner, value, node_id
+                FROM public.transaction
+                WHERE transaction.node_id = %(node_id)s
+            """
+            cursor.execute(sql, {'node_id': node.id})
+            sql_res = cursor.fetchall()
+            for row in sql_res:
+                temp_transaction = Transaction().initialisation_sql(row)
+                res.append(temp_transaction)
+    conn.close()
+    return res
 
 
 def get_server_ip(owner: int, node_type: int):
@@ -257,3 +238,53 @@ def get_server_ip(owner: int, node_type: int):
             res.server_ip = sql_res[5]
     conn.close()
     return res
+
+
+def get_nodes_type() -> []:
+    res = []
+    conn = create_conn()
+    with conn:
+        with conn.cursor() as cursor:
+            sql = """
+                        SELECT id, name, discription, cost
+	                    FROM public.node_types"""
+            cursor.execute(sql)
+            sql_res = cursor.fetchall()
+            for row in sql_res:
+                temp_node_type = NodeTypeClass.initialisation_sql (row)
+                res.append(temp_node_type)
+    conn.close()
+    return res
+
+def get_node_type(type_name: str) -> NodeTypeClass:
+    res: NodeTypeClass
+    conn = create_conn()
+    with conn:
+        with conn.cursor() as cursor:
+            sql = """
+                        SELECT id, name, discription, cost
+	                    FROM public.node_types	                    
+	                    WHERE lower(name) = LOWER(%(name)s)"""
+            cursor.execute(sql, {'name': type_name})
+            sql_res = cursor.fetchone()
+            res = NodeTypeClass().initialisation_sql(sql_res)
+    conn.close()
+    return res
+
+
+def set_node(node_type: NodeTypeClass, owner: User):
+    conn = create_conn()
+    with conn:
+        with conn.cursor() as cursor:
+            sql = """
+                        INSERT INTO public.nodes(
+	                    owner, type, payment_date, cost, server_ip)
+	                    VALUES (%(owner_id)s, %(type_id)s, %(payment_date)s, %(cost)s, %(server_ip)s);"""
+
+            cursor.execute(sql, {
+                'owner_id': owner.id,
+                "type_id": node_type.id,
+                "payment_date": datetime.now(),
+                "cost": node_type.cost,
+                'server_ip': ""})
+    conn.close()
