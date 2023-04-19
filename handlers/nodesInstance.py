@@ -1,6 +1,6 @@
 import datetime
 from dateutil.relativedelta import relativedelta
-from decimal import *
+from eth_utils.units import units
 from aiogram.enums.parse_mode import ParseMode
 
 from aiogram.types.message import Message
@@ -9,6 +9,7 @@ from aiogram import Router, F
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
+from hexbytes import HexBytes
 
 import config
 from botStates import States
@@ -76,7 +77,7 @@ async def check_hash(message: Message, state: FSMContext):
     rpc = config.RPC
     web3 = Web3(Web3.HTTPProvider(rpc))
     try:
-        txn = web3.eth.get_transaction(transaction_hash)
+        txn = web3.eth.get_transaction_receipt(transaction_hash)
     except TransactionNotFound:
         await message.answer(
             text="Error: Transaction not found.",
@@ -89,8 +90,11 @@ async def check_hash(message: Message, state: FSMContext):
             reply_markup=ReplyKeyboardRemove()
         )
         return
+    contract_address = txn.logs[0].address
+    contract = web3.eth.contract(contract_address, abi=config.ERC20_ABI)
+    token_decimals = contract.functions.decimals().call()
 
-    trn = Transaction().initialisation_transaction(transaction_hash, txn)
+    trn = Transaction().initialisation_transaction(transaction_hash, token_decimals, txn)
 
     if not transaction_valid(trn):
         await message.answer(
@@ -99,12 +103,10 @@ async def check_hash(message: Message, state: FSMContext):
         )
         return
 
-    # to do use state.get_data()
-    telegram_id = message.from_user.id
-    user = get_user(telegram_id)
-
     data = await state.get_data()
+    user = data.get('user')
     node = data.get('node')
+
     try:
         set_transaction(trn, user, node)
     except psycopg2.errors.UniqueViolation:
@@ -113,7 +115,7 @@ async def check_hash(message: Message, state: FSMContext):
             reply_markup=ReplyKeyboardRemove()
         )
         return
-    except Exception:
+    except Exception as err:
         await message.answer(
             text="Error: Unexpected error.",
             reply_markup=ReplyKeyboardRemove()
@@ -128,11 +130,9 @@ async def check_hash(message: Message, state: FSMContext):
 
 
 def transaction_valid(transaction: Transaction) -> bool:
-    wallet_address = get_payment_data()
-    if wallet_address == transaction.transaction_to:
-        return True
-    else:
-        return False
+    wallet_address = HexBytes(get_payment_data())
+    transction_to = HexBytes(transaction.transaction_to)
+    return not (False in ([_a == _b for _a, _b in zip(reversed(wallet_address), reversed(transction_to))]))
 
 
 def payment_state(node: Node) -> float:
@@ -142,6 +142,14 @@ def payment_state(node: Node) -> float:
     transactions = get_transaction_for_node(node)
     transactions_sum: float = 0
     for transaction in transactions:
-        transactions_sum += transaction.value
-    paid = float(Web3.from_wei(transactions_sum, "ether"))
+        unit = (unit_name(transaction.decimal), "ether")[transaction.decimal == None]
+        transactions_sum += float(Web3.from_wei(Web3.to_int(hexstr=transaction.value), unit))
+    paid = transactions_sum
     return paid - duty
+
+
+def unit_name(decimal) -> str:
+    for name, places in units.items():
+        if places == (10 ** decimal):
+            return name
+    return None

@@ -1,32 +1,15 @@
 from aiogram import Router, F
-from aiogram.filters import Command
-from data.entity.node_type import NodeType, NodeTypeClass
-import psycopg2
+from data.entity.node_type import NodeType
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
-
-import config
 from botStates import States
-from web3 import Web3
-from web3.exceptions import TransactionNotFound
-from data.database import get_nodes_type, get_user, get_node_type, set_node
-from data.entity.transaction import Transaction
-from keyboards.for_questions import get_keyboard_for_node_type, get_keyboard_for_accept
+from data.database import get_node_type, set_node
+from keyboards.for_questions import get_keyboard_for_accept
 
 
 router = Router()
 
-
-@router.message(Command('order'))
-async def order(message: Message, state: FSMContext):
-    text = "Сhoose node type\n"
-    keyboard = get_keyboard_for_node_type([e.name for e in NodeType])
-    await message.answer(
-        text=text,
-        reply_markup=keyboard
-    )
-    await state.set_state(States.order)
 
 @router.message(
     States.order,

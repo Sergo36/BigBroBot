@@ -59,7 +59,7 @@ def set_user(t_id, t_username) -> User:
 
 
 
-def getNodes(user_id):
+def get_nodes(user_id):
     res = []
     conn = create_conn()
     with conn:
@@ -127,10 +127,12 @@ def get_transactions(user_id):
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
-            sql = """
-                SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, status, owner, value, node_id
-	            FROM public.transaction
-                WHERE owner = %(owner)s"""
+            sql = Transaction.get_sql() + """WHERE owner = %(owner)s"""
+
+            # sql = """
+            #     SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, status, decimals, owner, value, node_id
+	        #     FROM public.transaction
+            #     WHERE owner = %(owner)s"""
             cursor.execute(sql, {'owner': user_id})
 
             sql_res = cursor.fetchall()
@@ -174,7 +176,8 @@ def set_transaction(trn: Transaction, user: User, node: Node):
 	                    status, 
 	                    owner, 
 	                    value, 
-	                    node_id)
+	                    node_id, 
+	                    decimals)
 	                VALUES (
 	                    %(t_hash)s, 
 	                    %(b_hash)s,
@@ -184,7 +187,8 @@ def set_transaction(trn: Transaction, user: User, node: Node):
 	                    %(status)s, 
 	                    %(owner)s, 
 	                    %(value)s, 
-	                    %(node)s);"""
+	                    %(node)s,
+	                    %(decimals)s);"""
 
             cursor.execute(sql, {
                 't_hash': trn.transaction_hash,
@@ -192,7 +196,8 @@ def set_transaction(trn: Transaction, user: User, node: Node):
                 "b_number": trn.block_number,
                 "t_from": trn.transaction_from,
                 't_to': trn.transaction_to,
-                'status': True, # to do add request status
+                'status': trn.status,
+                'decimals': trn.decimals,
                 'owner': user.id,
                 'value': trn.value,
                 'node': node.id})
@@ -204,11 +209,12 @@ def get_transaction_for_node(node: Node) -> []:
     conn = create_conn()
     with conn:
         with conn.cursor() as cursor:
-            sql = """
-                SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, transaction.status, owner, value, node_id
-                FROM public.transaction
-                WHERE transaction.node_id = %(node_id)s
-            """
+            sql = Transaction.get_sql() + """WHERE transaction.node_id = %(node_id)s"""
+            # sql = """
+            #     SELECT transaction_hash, block_hash, block_number, transaction_from, transaction_to, status, decimals, owner, value, node_id
+            #     FROM public.transaction
+            #     WHERE transaction.node_id = %(node_id)s
+            # """
             cursor.execute(sql, {'node_id': node.id})
             sql_res = cursor.fetchall()
             for row in sql_res:
@@ -227,7 +233,7 @@ def get_server_ip(owner: int, node_type: int):
                         SELECT id, owner, type, payment_date, cost, server_ip
                         FROM public.nodes
                         WHERE owner = %(owner)s AND type = %(node_type)s"""
-            cursor.execute(sql, {'owner' : owner, 'node_type': node_type})
+            cursor.execute(sql, {'owner': owner, 'node_type': node_type})
 
             sql_res = cursor.fetchone()
             res.id = sql_res[0]

@@ -12,7 +12,6 @@ async def transactions(message: Message, state: FSMContext):
     message_id = message.from_user.id
     user = get_user(message_id)
     user_transactions = get_transactions(user.id)
-    c = 5;
 
 
 
