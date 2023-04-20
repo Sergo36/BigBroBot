@@ -21,7 +21,7 @@ class UsersMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         if database_user is None:
-            database_user = set_user(data['events_from_user'].id, data['event_from_user'].username)
+            database_user = set_user(data['event_from_user'].id, data['event_from_user'].username)
             await data['state'].update_data(user=database_user)
         else:
             await data['state'].update_data(user=database_user)
