@@ -42,9 +42,8 @@ async def select_node(message: Message, state: FSMContext):
 
     text = "Node information:\n\n"
     text += f'Payments date: {node.payment_date.day} of every month\n' \
-            f'Payment state: {paid_text}, {text1}\n'\
-            f'Server IP: {node.server_ip}\n'\
-            f'EYWA connect hash: {node.hash}\n'
+            f'Payment state: {paid_text}, {text1}\n' \
+            f'Server IP: {node.server_ip}'
 
     keyboard = get_keyboard_for_node_instance()
     await message.answer(
@@ -79,6 +78,18 @@ async def payment(message: Message, state: FSMContext):
     await message.answer(
         text=text,
         reply_markup=keyboard
+    )
+
+
+@router.message(States.nodes,
+                Text(text="Hash node task", ignore_case=True))
+async def hash_node_task(message: Message, state: FSMContext):
+    creation_hash = (await state.get_data()).get("node").hash
+    text = f"`{creation_hash}`"
+    await message.answer(
+        text=text,
+        parse_mode=ParseMode.MARKDOWN_V2,
+        reply_markup=ReplyKeyboardRemove()
     )
 
 

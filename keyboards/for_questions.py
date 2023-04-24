@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
-def getKeyboardFromNodes(nodes: list) -> ReplyKeyboardMarkup:
+def get_keyboard_from_nodes(nodes: list) -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()
     for node in nodes:
         kb.button(text=node)
@@ -28,11 +28,13 @@ def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
     kb.adjust(1, 1)
     return kb.as_markup(resize_keyboard=True)
 
+
 def get_keyboard_for_tasks() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()
+    kb.button(text="Hash node task")
     kb.button(text="Restart node task")
     kb.button(text="Cancel")
-    kb.adjust(1, 1)
+    kb.adjust(2, 1)
     return kb.as_markup(resize_keyboard=True)
 
 
