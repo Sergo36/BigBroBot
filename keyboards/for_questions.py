@@ -23,6 +23,14 @@ def get_keyboard_from_id(id_list: list) -> ReplyKeyboardMarkup:
 def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()
     kb.button(text="Payment")
+    kb.button(text="Tasks")
+    kb.button(text="Cancel")
+    kb.adjust(1, 1)
+    return kb.as_markup(resize_keyboard=True)
+
+def get_keyboard_for_tasks() -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardBuilder()
+    kb.button(text="Restart node task")
     kb.button(text="Cancel")
     kb.adjust(1, 1)
     return kb.as_markup(resize_keyboard=True)

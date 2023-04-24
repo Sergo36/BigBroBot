@@ -8,7 +8,7 @@ import psycopg2
 from aiogram import Router, F
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message, ReplyKeyboardRemove, FSInputFile
 from hexbytes import HexBytes
 
 import config
@@ -18,8 +18,7 @@ from web3.exceptions import TransactionNotFound
 from data.entity.node import Node
 from data.database import get_user, get_node, get_payment_data, set_transaction, get_transaction_for_node
 from data.entity.transaction import Transaction
-from keyboards.for_questions import get_keyboard_for_node_instance
-
+from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_tasks
 
 router = Router()
 
@@ -43,7 +42,7 @@ async def select_node(message: Message, state: FSMContext):
 
     text = "Node information:\n\n"
     text += f'Payments date: {node.payment_date.day} of every month\n' \
-            f'Payment state: {paid_text}, {text1}\n'\
+            f'Payment state: {paid_text}, {text1}\n' \
             f'Server IP: {node.server_ip}'
 
     keyboard = get_keyboard_for_node_instance()
@@ -62,12 +61,33 @@ async def payment(message: Message, state: FSMContext):
     node = data.get('node')
 
     text = f"To pay, transfer `{node.cost}` USDT in BEP20 chain to `{wallet_address}`\n\n" \
-            f"After confirming the transaction, send the hash of the transaction\n"
+           f"After confirming the transaction, send the hash of the transaction\n"
     await message.answer(
         text=text,
         parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=ReplyKeyboardRemove()
     )
+
+
+@router.message(
+    States.nodes,
+    Text(text="Tasks", ignore_case=True))
+async def payment(message: Message, state: FSMContext):
+    text = f"Select task"
+    keyboard = get_keyboard_for_tasks()
+    await message.answer(
+        text=text,
+        reply_markup=keyboard
+    )
+
+
+@router.message(States.nodes,
+                Text(text="Restart node task", ignore_case=True))
+async def restart_node_task(message: Message, state: FSMContext):
+    telegram_id = (await state.get_data()).get("user").telegram_id
+    screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/restart.png"
+    screenshot_file = FSInputFile(screenshot_path)
+    await message.answer_photo(screenshot_file)
 
 
 @router.message(
@@ -122,7 +142,6 @@ async def check_hash(message: Message, state: FSMContext):
             reply_markup=ReplyKeyboardRemove()
         )
         return
-
 
     await message.answer(
         text="Transaction approved",
