@@ -42,8 +42,9 @@ async def select_node(message: Message, state: FSMContext):
 
     text = "Node information:\n\n"
     text += f'Payments date: {node.payment_date.day} of every month\n' \
-            f'Payment state: {paid_text}, {text1}\n' \
-            f'Server IP: {node.server_ip}'
+            f'Payment state: {paid_text}, {text1}\n'\
+            f'Server IP: {node.server_ip}\n'\
+            f'EYWA connect hash: {node.hash}\n'
 
     keyboard = get_keyboard_for_node_instance()
     await message.answer(

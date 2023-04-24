@@ -88,7 +88,7 @@ def get_node(node_id):
     with conn:
         with conn.cursor() as cursor:
             sql = """
-                    SELECT id, owner, type, payment_date, cost, server_ip
+                    SELECT id, owner, type, payment_date, cost, server_ip, hash
                     FROM public.nodes
                     WHERE id = %(node_id)s"""
             cursor.execute(sql, {'node_id': node_id})

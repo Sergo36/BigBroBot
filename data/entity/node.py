@@ -8,6 +8,7 @@ class Node:
     payment_date: datetime = datetime(1970, 1, 1)
     cost: float = 0
     server_ip: str = ""
+    hash: str = ""
 
     def initialisation_sql(self, sql_res):
         if not sql_res:
@@ -19,5 +20,6 @@ class Node:
         self.payment_date = sql_res[3]
         self.cost = sql_res[4]
         self.server_ip = sql_res[5]
+        self.hash = sql_res[6]
 
         return self
