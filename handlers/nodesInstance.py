@@ -1,4 +1,6 @@
 import datetime
+import os
+
 from dateutil.relativedelta import relativedelta
 from eth_utils.units import units
 from aiogram.enums.parse_mode import ParseMode
@@ -98,6 +100,15 @@ async def hash_node_task(message: Message, state: FSMContext):
 async def restart_node_task(message: Message, state: FSMContext):
     telegram_id = (await state.get_data()).get("user").telegram_id
     screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/restart.png"
+
+    if not os.path.exists(screenshot_path):
+        text = "Not found"
+        await message.answer(
+            text=text,
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return
+
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
 
