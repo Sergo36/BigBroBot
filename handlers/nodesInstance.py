@@ -143,7 +143,7 @@ async def backup_keys_task(message: Message, state: FSMContext):
     scp.close()
     ssh.close()
 
-    file_path = os.path.join(local_path, 'eywa')
+    file_path = os.path.join(local_path, 'keys')
     file_dir = os.listdir(file_path)
     zip_path = os.path.join(local_path, 'keys.zip')
 
