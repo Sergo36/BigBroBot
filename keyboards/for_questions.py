@@ -33,8 +33,9 @@ def get_keyboard_for_tasks() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()
     kb.button(text="Hash node task")
     kb.button(text="Restart node task")
+    kb.button(text="Backup keys task")
     kb.button(text="Cancel")
-    kb.adjust(2, 1)
+    kb.adjust(3, 1)
     return kb.as_markup(resize_keyboard=True)
 
 

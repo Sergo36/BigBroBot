@@ -1,17 +1,19 @@
 import datetime
-import os
+import os, zipfile
 
 from dateutil.relativedelta import relativedelta
 from eth_utils.units import units
 from aiogram.enums.parse_mode import ParseMode
 
-from aiogram.types.message import Message
 import psycopg2
 from aiogram import Router, F
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove, FSInputFile
 from hexbytes import HexBytes
+
+from paramiko import SSHClient
+from scp import SCPClient
 
 import config
 from botStates import States
@@ -21,6 +23,8 @@ from data.entity.node import Node
 from data.database import get_user, get_node, get_payment_data, set_transaction, get_transaction_for_node
 from data.entity.transaction import Transaction
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_tasks
+
+
 
 router = Router()
 
@@ -111,6 +115,45 @@ async def restart_node_task(message: Message, state: FSMContext):
 
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
+
+
+@router.message(States.nodes,
+                Text(text="Backup keys task", ignore_case=True))
+async def backup_keys_task(message: Message, state: FSMContext):
+    telegram_id = (await state.get_data()).get("user").telegram_id
+    node = (await state.get_data()).get("node")
+
+    directory = "backup"
+    parent_dir = f"{config.FILE_BASE_PATH}/{telegram_id}/"
+    if not os.path.isdir(parent_dir):
+        os.mkdir(parent_dir)
+    local_path = os.path.join(parent_dir, directory)
+    if not os.path.isdir(local_path):
+        os.mkdir(local_path)
+
+    ssh = SSHClient()
+    ssh.load_system_host_keys()
+    ssh.connect(hostname=node.server_ip, username='root')
+    scp = SCPClient(ssh.get_transport())
+
+    remote_path = '/app/eywa/'
+    scp.get(remote_path=remote_path,
+            local_path=local_path,
+            recursive=True)
+    scp.close()
+    ssh.close()
+
+    file_path = os.path.join(local_path, 'eywa')
+    file_dir = os.listdir(file_path)
+    zip_path = os.path.join(local_path, 'keys.zip')
+
+    with zipfile.ZipFile(zip_path, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        for file in file_dir:
+            add_file = os.path.join(file_path, file)
+            zf.write(add_file, file)
+
+    backup_file = FSInputFile(zip_path)
+    await message.answer_document(backup_file)
 
 
 @router.message(
