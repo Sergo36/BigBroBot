@@ -136,7 +136,7 @@ async def backup_keys_task(message: Message, state: FSMContext):
     ssh.connect(hostname=node.server_ip, username='root')
     scp = SCPClient(ssh.get_transport())
 
-    remote_path = '/app/eywa/'
+    remote_path = '/app/.data/keys/'
     scp.get(remote_path=remote_path,
             local_path=local_path,
             recursive=True)
