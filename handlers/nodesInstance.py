@@ -208,6 +208,23 @@ async def close_port_task(message: Message, state: FSMContext):
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
 
+    @router.message(States.nodes,
+                    Text(text="Open port task", ignore_case=True))
+    async def close_port_task(message: Message, state: FSMContext):
+        telegram_id = (await state.get_data()).get("user").telegram_id
+        screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/open_port.png"
+
+        if not os.path.exists(screenshot_path):
+            text = "Not found"
+            await message.answer(
+                text=text,
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return
+
+        screenshot_file = FSInputFile(screenshot_path)
+        await message.answer_photo(screenshot_file)
+
 @router.message(
     States.nodes,
     F.text.regexp('0[x][0-9a-fA-F]{64}'))
