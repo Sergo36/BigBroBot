@@ -1,0 +1,11 @@
+{
+  "prerun": "# some code here",
+  "directory": "migrations",
+  "history": "migratehistory",
+  "models": [
+    "data.models.user.User",
+    "data.models.node.Node",
+    "data.models.node_type.NodeType",
+    "data.models.transaction.Transaction"
+  ]
+}
