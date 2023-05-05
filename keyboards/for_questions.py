@@ -39,8 +39,9 @@ def get_keyboard_for_tasks() -> ReplyKeyboardMarkup:
     kb.button(text="Close port task")
     kb.button(text="Open port task")
     kb.button(text="Turning off container task")
+    kb.button(text="New version restart task")
     kb.button(text="Cancel")
-    kb.adjust(3, 4, 1, 1)
+    kb.adjust(3, 4, 2, 1)
     return kb.as_markup(resize_keyboard=True)
 
 

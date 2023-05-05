@@ -24,8 +24,6 @@ from data.database import get_user, get_node, get_payment_data, set_transaction,
 from data.entity.transaction import Transaction
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_tasks
 
-
-
 router = Router()
 
 
@@ -191,6 +189,25 @@ async def restore_node_task(message: Message, state: FSMContext):
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
 
+
+@router.message(States.nodes,
+                Text(text="New version restart task", ignore_case=True))
+async def new_version_restart_task(message: Message, state: FSMContext):
+    telegram_id = (await state.get_data()).get("user").telegram_id
+    screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/new-version-restart.png"
+
+    if not os.path.exists(screenshot_path):
+        text = "Not found"
+        await message.answer(
+            text=text,
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return
+
+    screenshot_file = FSInputFile(screenshot_path)
+    await message.answer_photo(screenshot_file)
+
+
 @router.message(States.nodes,
                 Text(text="Close port task", ignore_case=True))
 async def close_port_task(message: Message, state: FSMContext):
@@ -207,6 +224,7 @@ async def close_port_task(message: Message, state: FSMContext):
 
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
+
 
 @router.message(States.nodes,
                 Text(text="Open port task", ignore_case=True))
@@ -225,6 +243,7 @@ async def close_port_task(message: Message, state: FSMContext):
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
 
+
 @router.message(States.nodes,
                 Text(text="Turning off container task", ignore_case=True))
 async def close_port_task(message: Message, state: FSMContext):
@@ -241,6 +260,7 @@ async def close_port_task(message: Message, state: FSMContext):
 
     screenshot_file = FSInputFile(screenshot_path)
     await message.answer_photo(screenshot_file)
+
 
 @router.message(
     States.nodes,
