@@ -7,7 +7,7 @@ from  data.entity.node_type import NodeTypeClass
 
 
 def create_conn():
-    return psycopg2.connect(dbname="bla_bla_nodes", user="postgres", password="postgres", host="127.0.0.1", port="5432")
+    return psycopg2.connect(dbname="nodes", user="postgres", password="postgres", host="127.0.0.1", port="5432")
 
 
 # with conn:
@@ -268,7 +268,7 @@ def get_node_type(type_name: str) -> NodeTypeClass:
     with conn:
         with conn.cursor() as cursor:
             sql = """
-                        SELECT id, name, discription, cost
+                        SELECT id, name, description, cost
 	                    FROM public.node_types	                    
 	                    WHERE lower(name) = LOWER(%(name)s)"""
             cursor.execute(sql, {'name': type_name})
@@ -284,7 +284,7 @@ def set_node(node_type: NodeTypeClass, owner: User):
         with conn.cursor() as cursor:
             sql = """
                         INSERT INTO public.nodes(
-	                    owner, type, payment_date, cost, server_ip)
+	                    owner_id, type_id, payment_date, cost, server_ip)
 	                    VALUES (%(owner_id)s, %(type_id)s, %(payment_date)s, %(cost)s, %(server_ip)s);"""
 
             cursor.execute(sql, {
