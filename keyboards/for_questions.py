@@ -1,5 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 
 def get_keyboard_from_nodes(nodes: list) -> ReplyKeyboardMarkup:
@@ -47,12 +47,12 @@ def get_keyboard_for_tasks() -> ReplyKeyboardMarkup:
 
 
 def get_keyboard_for_node_type(type_list: list) -> ReplyKeyboardMarkup:
-    kb = ReplyKeyboardBuilder()
+    kb = InlineKeyboardBuilder()
     for type in type_list:
-        kb.button(text=type)
-    kb.button(text="Cancel")
+        kb.button(text=type, callback_data=type)
+    kb.button(text='Back to Main menu', callback_data='main_menu')
     kb.adjust(len(type_list), 1)
-    return kb.as_markup(resize_keyboard=True)
+    return kb.as_markup()
 
 
 def get_keyboard_for_accept() -> ReplyKeyboardMarkup:
@@ -70,3 +70,4 @@ def get_keyboard_for_actions(actions_list: list) -> ReplyKeyboardMarkup:
     kb.button(text="Cancel")
     kb.adjust(len(actions_list), 1)
     return kb.as_markup(resize_keyboard=True)
+
