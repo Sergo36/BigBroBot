@@ -194,7 +194,8 @@ async def restore_node_task(message: Message, state: FSMContext):
                 Text(text="New version restart task", ignore_case=True))
 async def new_version_restart_task(message: Message, state: FSMContext):
     telegram_id = (await state.get_data()).get("user").telegram_id
-    screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/new-version-restart.png"
+    # screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/new-version-restart.png"
+    screenshot_path = f"{config.FILE_BASE_PATH}/{telegram_id}/new-version-restart-second.png"
 
     if not os.path.exists(screenshot_path):
         text = "Not found"
