@@ -30,10 +30,40 @@ class Node(peewee.Model):
     type = snapshot.ForeignKeyField(index=True, model='nodetype')
     payment_date = DateField()
     cost = FloatField()
-    server_ip = TextField()
-    hash = TextField()
     class Meta:
         table_name = "nodes"
+
+
+@snapshot.append
+class NodeDataType(peewee.Model):
+    name = TextField()
+    class Meta:
+        table_name = "node_data_type"
+
+
+@snapshot.append
+class NodeData(peewee.Model):
+    name = TextField()
+    type = snapshot.ForeignKeyField(index=True, model='nodedatatype')
+    data = TextField()
+    class Meta:
+        table_name = "node_data"
+
+
+@snapshot.append
+class NodeFields(peewee.Model):
+    node_id = snapshot.ForeignKeyField(index=True, model='node')
+    node_data_id = snapshot.ForeignKeyField(index=True, model='nodedata')
+    class Meta:
+        table_name = "node_fields"
+
+
+@snapshot.append
+class PaymentData(peewee.Model):
+    wallet_address = TextField(primary_key=True)
+    active = BooleanField()
+    class Meta:
+        table_name = "payment_data"
 
 
 @snapshot.append
@@ -52,19 +82,3 @@ class Transaction(peewee.Model):
         table_name = "transactions"
 
 
-def forward(old_orm, new_orm):
-    old_user = old_orm['user']
-    user = new_orm['user']
-    return [
-        # Convert datatype of the field user.telegram_id: TEXT -> INT,
-        user.update({user.telegram_id: old_user.telegram_id.cast('INTEGER')}).where(old_user.telegram_id.is_null(False)),
-    ]
-
-
-def backward(old_orm, new_orm):
-    old_user = old_orm['user']
-    user = new_orm['user']
-    return [
-        # Don't know how to do the conversion correctly, use the naive,
-        user.update({user.telegram_id: old_user.telegram_id}).where(old_user.telegram_id.is_null(False)),
-    ]

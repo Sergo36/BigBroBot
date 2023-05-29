@@ -18,3 +18,16 @@ class Transaction(BaseModel):
 
     class Meta:
         table_name = 'transactions'
+
+    def initialisation_transaction(self, transaction_hash, decimals, txn):
+        self.transaction_hash = transaction_hash
+        self.block_hash = txn['blockHash'].hex()
+        self.block_number = txn['blockNumber']
+        self.transaction_from = txn.logs[0].topics[1].hex()
+        self.transaction_to = txn.logs[0].topics[2].hex()
+        self.status = bool(txn['status'])
+        self.decimals = decimals
+        self.owner = 0
+        self.value = txn.logs[0].data.hex()
+        self.node_id = 0
+        return self

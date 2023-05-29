@@ -3,7 +3,8 @@ import logging
 import asyncio
 
 from aiogram import Bot, Dispatcher
-from handlers import nodesInstance, common, order
+from handlers import common, order, nodes
+
 # log
 logging.basicConfig(level=logging.INFO)
 
@@ -11,7 +12,7 @@ async def main():
     bot = Bot(token=config.TOKEN)
     dp = Dispatcher()
 
-    dp.include_routers(nodesInstance.router)
+    dp.include_routers(nodes.router)
     dp.include_routers(order.router)
 
     dp.include_routers(common.router)

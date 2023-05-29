@@ -9,6 +9,7 @@
     "data.models.transaction.Transaction",
     "data.models.node_fields.NodeFields",
     "data.models.node_data.NodeData",
-    "data.models.node_data_type.NodeDataType"
+    "data.models.node_data_type.NodeDataType",
+    "data.models.payment_data.PaymentData"
   ]
 }

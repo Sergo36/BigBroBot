@@ -1,35 +1,46 @@
-from aiogram import Router, F
-from data.entity.node_type import NodeType
-from aiogram.filters import Text
+from datetime import datetime
+from aiogram import Router, F, types
+from callbacks.order_callback_factory import OrderCallbackFactory
+from data.models.node_type import NodeType
+from data.models.node import Node
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove
 from botStates import States
-from data.database import get_node_type, set_node
-from keyboards.for_questions import get_keyboard_for_accept
-
+from keyboards.for_questions import get_keyboard_for_accept, get_keyboard_for_order_confirm
 
 router = Router()
 
 
-@router.message(
+@router.callback_query(
     States.order,
-    F.text.in_([e.name.__str__() for e in NodeType]))
-async def order_type(message: Message, state: FSMContext):
-    node_type = get_node_type(message.text)
-
+    OrderCallbackFactory.filter(F.action == "select_type"))
+async def order_type(
+        callback: types.CallbackQuery,
+        callback_data: OrderCallbackFactory,
+        state: FSMContext
+):
+    node_type = NodeType.get(NodeType.id == callback_data.node_type_id)
     await state.update_data(node_type=node_type)
-
     keyboard = get_keyboard_for_accept()
-    await message.answer(text=f'Order cost: {node_type.cost.__str__()}', reply_markup=keyboard)
+    await callback.message.edit_text(text=f'Order cost: {node_type.cost.__str__()}', reply_markup=keyboard)
 
 
-@router.message(
+@router.callback_query(
     States.order,
-    Text(text="Confirm", ignore_case=True))
-async def confirm_order(message: Message, state: FSMContext):
+    OrderCallbackFactory.filter(F.action == "confirm"))
+async def confirm_order(
+        callback: types.CallbackQuery,
+        state: FSMContext
+):
     data = await state.get_data()
     node_type = data.get('node_type')
     user = data.get('user')
+    keyboard = get_keyboard_for_order_confirm()
 
-    set_node(node_type, user)
-    await message.answer(text="Order approved ", reply_markup=ReplyKeyboardRemove)
+    Node.create(
+        owner=user.id,
+        type=node_type.id,
+        payment_date=datetime.now(),
+        cost=node_type.cost,
+    )
+    await callback.answer(text="Order approved", show_alert=True)
+    await callback.message.edit_text(text="Choose a section from the list below:", reply_markup=keyboard)
