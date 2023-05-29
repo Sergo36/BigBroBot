@@ -2,6 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardBut
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 from callbacks.nodes_callback_factory import NodesCallbackFactory
+from callbacks.notification_callback_factory import NotificationCallbackFactory
 from callbacks.order_callback_factory import OrderCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
 

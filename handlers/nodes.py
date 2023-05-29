@@ -13,6 +13,7 @@ from web3.exceptions import TransactionNotFound
 
 from botStates import States
 from callbacks.nodes_callback_factory import NodesCallbackFactory
+from callbacks.notification_callback_factory import NotificationCallbackFactory
 from data.models.node import Node
 from data.models.node_data import NodeData
 from data.models.node_data_type import NodeDataType
@@ -21,9 +22,11 @@ from data.models.payment_data import PaymentData
 from data.models.transaction import Transaction
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_empty_nodes_list, \
     get_keyboard_null, get_keyboard_for_node_extended_information, get_keyboard_for_transaction_fail
+from middleware.user import UsersMiddleware
 from services.web3 import get_transaction, transaction_valid
 
 router = Router()
+router.callback_query.middleware(UsersMiddleware())
 
 
 @router.callback_query(
@@ -52,8 +55,24 @@ async def select_node(
 
 
 @router.callback_query(
+    NotificationCallbackFactory.filter(F.action == "payment_node"))
+async def notification_payment(
+        callback: types.CallbackQuery,
+        callback_data: NotificationCallbackFactory,
+        state: FSMContext):
+    node = Node.get(Node.id == callback_data.node_id)
+    await state.update_data(node=node)
+    await state.set_state(States.nodes)
+    await payment(callback, state)
+
+
+@router.callback_query(
     States.nodes,
     NodesCallbackFactory.filter(F.action == "payment_node"))
+async def nodes_payment(callback: types.CallbackQuery, state: FSMContext):
+    await payment(callback, state)
+
+
 async def payment(callback: types.CallbackQuery, state: FSMContext):
     wallet_address = PaymentData.get(PaymentData.active == True).wallet_address
     data = await state.get_data()
@@ -67,6 +86,8 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=get_keyboard_for_node_extended_information(node),
     )
     await state.update_data(callback=callback)
+
+
 
 
 @router.callback_query(

@@ -15,12 +15,11 @@ from keyboards.for_questions import get_keyboard_for_node_type, \
 from middleware.user import UsersMiddleware
 
 from botStates import States
-from typing import Optional
-from aiogram.filters.callback_data import CallbackData
 from magic_filter import F
 
 router = Router()
 router.message.middleware(UsersMiddleware())
+router.callback_query.middleware(UsersMiddleware())
 
 
 @router.message(Command(commands=["start"]))
