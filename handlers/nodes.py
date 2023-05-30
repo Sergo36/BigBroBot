@@ -21,7 +21,7 @@ from data.models.payment_data import PaymentData
 from data.models.transaction import Transaction
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_empty_nodes_list, \
     get_keyboard_null, get_keyboard_for_node_extended_information, get_keyboard_for_transaction_fail
-from services.web3 import get_transaction, transaction_valid
+from services.web3 import get_transaction, transaction_valid, get_block_date
 
 router = Router()
 
@@ -150,6 +150,14 @@ def get_transaction_blockchain(transaction_hash: str):
     if not transaction_valid(trn):
         text = "Error: Transaction not valid."
         return None, text
+
+    try:
+        t_data = get_block_date(trn.block_hash)
+        trn.transaction_date = t_data
+    except:
+        text = "Error: Transaction date not found."
+        return None, text
+
     return trn, ""
 
 

@@ -1,7 +1,7 @@
 from data.models.base_model import BaseModel
 from data.models.user import User
 from data.models.node import Node
-from peewee import TextField, BooleanField, ForeignKeyField, IntegerField
+from peewee import TextField, BooleanField, ForeignKeyField, IntegerField, TimestampField
 
 
 class Transaction(BaseModel):
@@ -10,8 +10,9 @@ class Transaction(BaseModel):
     block_number = TextField(column_name='block_number')
     transaction_from = TextField(column_name='transaction_from')
     transaction_to = TextField(column_name='transaction_to')
+    transaction_date = TimestampField(column_name='transaction_date')
     status = BooleanField(column_name='status')
-    owner = ForeignKeyField(column_name= 'owner', model=User)
+    owner = ForeignKeyField(column_name='owner', model=User)
     node_id = ForeignKeyField(column_name='node_id', model=Node)
     value = TextField(column_name='value')
     decimals = IntegerField(column_name='decimals')
