@@ -1,5 +1,8 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from callbacks.main_callback_factory import MainCallbackFactory
+from callbacks.nodes_callback_factory import NodesCallbackFactory
+
 
 def get_keyboard_for_interactions(interactions):
     kb = InlineKeyboardBuilder()
@@ -8,4 +11,17 @@ def get_keyboard_for_interactions(interactions):
             text=interaction.name,
             callback_data=interaction.callback)
     kb.adjust(3)
+    return kb.as_markup()
+
+
+def get_keyboard_default_interaction():
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="Back to interactions list",
+        callback_data=NodesCallbackFactory(action="interaction")
+    )
+    kb.button(
+        text="Main menu",
+        callback_data=MainCallbackFactory(action="main_menu")
+    )
     return kb.as_markup()
