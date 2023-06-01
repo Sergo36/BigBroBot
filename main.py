@@ -4,14 +4,17 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 from handlers import common, order, nodes
+from  handlers.notification import notification
 
 # log
 logging.basicConfig(level=logging.INFO)
+
 
 async def main():
     bot = Bot(token=config.TOKEN)
     dp = Dispatcher()
 
+    dp.include_routers(notification.router)
     dp.include_routers(nodes.router)
     dp.include_routers(order.router)
 
