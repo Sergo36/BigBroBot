@@ -8,6 +8,14 @@ snapshot = Snapshot()
 
 
 @snapshot.append
+class Interaction(peewee.Model):
+    name = TextField()
+    callback = TextField()
+    class Meta:
+        table_name = "interactions"
+
+
+@snapshot.append
 class User(peewee.Model):
     telegram_id = IntegerField()
     telegram_name = TextField()
@@ -59,6 +67,14 @@ class NodeFields(peewee.Model):
 
 
 @snapshot.append
+class NodeInteraction(peewee.Model):
+    node_id = snapshot.ForeignKeyField(index=True, model='node')
+    node_interaction_id = snapshot.ForeignKeyField(index=True, model='interaction')
+    class Meta:
+        table_name = "node_interactions"
+
+
+@snapshot.append
 class PaymentData(peewee.Model):
     wallet_address = TextField(primary_key=True)
     active = BooleanField()
@@ -83,9 +99,3 @@ class Transaction(peewee.Model):
         table_name = "transactions"
 
 
-def forward(old_orm, new_orm):
-    transaction = new_orm['transaction']
-    return [
-        # Apply default value datetime.datetime(2023, 5, 30, 20, 38, 14, 400965) to the field transaction.transaction_date,
-        transaction.update({transaction.transaction_date: datetime.datetime(2023, 5, 30, 20, 38, 14, 400965)}).where(transaction.transaction_date.is_null(True)),
-    ]
