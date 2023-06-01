@@ -59,6 +59,8 @@ def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
         action="payment_node"))
     kb.button(text="Extended information", callback_data=NodesCallbackFactory(
         action="extended_information"))
+    kb.button(text="Interaction", callback_data=NodesCallbackFactory(
+        action="interaction"))
     kb.button(text="Back to nodes list", callback_data=NodesCallbackFactory(
         action="nodes_list"))
     kb.adjust(1)

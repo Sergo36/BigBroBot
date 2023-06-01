@@ -5,3 +5,4 @@ class States(StatesGroup):
     nodes = State()
     order = State()
     notification = State()
+    interaction = State()
