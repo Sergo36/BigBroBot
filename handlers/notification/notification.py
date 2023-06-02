@@ -58,13 +58,16 @@ async def notification_type(
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
 
     for row in query:
-        await bot.send_message(
-            chat_id=row.telegram_id,
-            parse_mode=ParseMode.MARKDOWN_V2,
-            text=f"♻️ Дорогой нодранер\! Напоминаем о продлении ноды ***{row.name}***\.\n"
+        try:
+            await bot.send_message(
+                chat_id=row.telegram_id,
+                parse_mode=ParseMode.MARKDOWN_V2,
+                text=f"♻️ Дорогой нодранер\! Напоминаем о продлении ноды ***{row.name}***\.\n"
                  f"Текущий период заканчивается {row.payment_date.day}\-го числа\! \n\n"
                  f"Для продления ноды нажми кнопку «***Payment***» ниже 👇",
-            reply_markup=get_keyboard_for_payment_notification(row.id))
+                reply_markup=get_keyboard_for_payment_notification(row.id))
+        except Exception as err:
+            print(f"Не удалось отправить уведомление {User.telegram_id}")
     await bot.session.close()
 
     await callback.answer()
