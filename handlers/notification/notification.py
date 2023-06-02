@@ -31,7 +31,6 @@ async def send_message(message: Message, state: FSMContext):
     NotificationCallbackFactory.filter(F.action == "send"))
 async def order_type(
         callback: types.CallbackQuery,
-        state: FSMContext
 ):
     text = "Choose node type\n"
     query = NodeType.select(NodeType.id, NodeType.name)
@@ -50,17 +49,22 @@ async def notification_type(
         callback_data: NotificationCallbackFactory
 ):
     query = (User
-             .select(User.telegram_id, Node.id)
+             .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name)
              .join(Node, on=(User.id == Node.owner))
-             .where(Node.type == callback_data.node_type_id))
+             .join(NodeType, on=(Node.type == NodeType.id))
+             .where(Node.type == callback_data.node_type_id)
+             .namedtuples())
 
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
 
-    for user in query:
+    for row in query:
         await bot.send_message(
-            chat_id=user.telegram_id,
-            text="Ploti nologi",
-            reply_markup=get_keyboard_for_payment_notification(user.node.id))
+            chat_id=row.telegram_id,
+            parse_mode=ParseMode.MARKDOWN_V2,
+            text=f"♻️ Дорогой нодранер\! Напоминаем о продлении ноды ***{row.name}***\.\n"
+                 f"Текущий период заканчивается {row.payment_date.day}\-го числа\! \n\n"
+                 f"Для продления ноды нажми кнопку «***Payment***» ниже 👇",
+            reply_markup=get_keyboard_for_payment_notification(row.id))
     await bot.session.close()
 
     await callback.answer()
