@@ -7,8 +7,9 @@ from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.order_callback_factory import OrderCallbackFactory
 
-from data.models.node import Node
 from data.models.node_type import NodeType
+from data.models.node import Node
+from handlers.common.keyboards import get_keyboard_for_report
 
 from keyboards.for_questions import get_keyboard_for_node_type, \
     get_keyboard_for_nodes_list, get_keyboard_for_empty_nodes_list, get_keyboard_main_menu
@@ -84,3 +85,15 @@ async def cmd_cancel(message: Message, state: FSMContext):
         text="Action canceled",
         reply_markup=ReplyKeyboardRemove()
     )
+
+
+@router.message(Command(commands=["report"]))
+async def report(message: Message):
+    await message.answer(
+        text="Choose a report type from the list below:",
+        reply_markup=get_keyboard_for_report()
+    )
+
+
+
+

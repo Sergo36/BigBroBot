@@ -10,6 +10,7 @@ class Node(BaseModel):
     type = ForeignKeyField(model=NodeType)
     payment_date = DateField(column_name='payment_date')
     cost = FloatField(column_name='cost')
+    expiry_date = DateField(column_name='expiry_date')
 
     class Meta:
         table_name = 'nodes'
