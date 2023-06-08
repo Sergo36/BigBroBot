@@ -1,11 +1,13 @@
 from datetime import datetime
 
 from aiogram import Router, F, types
+from aiogram.enums import ParseMode
 
 from callbacks.report_callback_factory import ReportCallbackFactory
 from data.models.node import Node
 from data.models.node_type import NodeType
 from data.models.user import User
+from handlers.nodes import payment_state
 from handlers.report.report_keyboards import get_keyboard_payments_report
 
 router = Router()
@@ -44,9 +46,10 @@ async def callback_get_report(
                  .order_by(Node.id)
                  .namedtuples())
 
-    text = ""
+    text = "|ID|\tType|\tDuty|\tOwner|\n"
     for row in query:
-        temp = f"Node id: {row.id}\tNode type: {row.name}\tOwner name: {row.telegram_name}\n"
+        node = Node.get(Node.id == row.id)
+        duty = payment_state(node)
+        temp = f"|{row.id}|\t{row.name}|\t{duty}|\t{row.telegram_name}|\n"
         text += temp
-
     await callback.message.edit_text(text=text)
