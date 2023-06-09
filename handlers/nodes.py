@@ -149,7 +149,7 @@ async def check_hash(message: Message, state: FSMContext):
         return
 
     node.expiry_date = get_expiry_date(node)
-    node.update()
+    node.save()
     await state.update_data(node=node)
 
     await callback.message.edit_text(text="Check transaction on blockchain: OK\n"
