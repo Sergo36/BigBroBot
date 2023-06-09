@@ -36,11 +36,13 @@ async def confirm_order(
     user = data.get('user')
     keyboard = get_keyboard_for_order_confirm()
 
+    date = datetime.now()
     Node.create(
         owner=user.id,
         type=node_type.id,
-        payment_date=datetime.now(),
+        payment_date=date,
         cost=node_type.cost,
+        expiry_date=date
     )
     await callback.answer(text="Order approved", show_alert=True)
     await callback.message.edit_text(text="Choose a section from the list below:", reply_markup=keyboard)

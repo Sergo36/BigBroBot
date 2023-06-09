@@ -3,8 +3,7 @@ from datetime import datetime
 from aiogram import Router, F, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove, Message
-from aiogram.methods.delete_message import DeleteMessage
+from aiogram.types import Message
 from dateutil.relativedelta import relativedelta
 from eth_utils.units import units
 from peewee import IntegrityError
@@ -20,9 +19,9 @@ from data.models.node_data_type import NodeDataType
 from data.models.node_fields import NodeFields
 from data.models.payment_data import PaymentData
 from data.models.transaction import Transaction
-from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_empty_nodes_list, \
+from keyboards.for_questions import get_keyboard_for_node_instance, \
     get_keyboard_null, get_keyboard_for_node_extended_information, get_keyboard_for_transaction_fail
-from services.web3 import get_transaction, transaction_valid, get_block_date
+from services.web3 import get_block_date
 from middleware.user import UsersMiddleware
 from services.web3 import get_transaction, transaction_valid
 
@@ -89,8 +88,6 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(callback=callback)
 
 
-
-
 @router.callback_query(
     States.nodes,
     NodesCallbackFactory.filter(F.action == "extended_information"))
@@ -151,6 +148,10 @@ async def check_hash(message: Message, state: FSMContext):
                                          reply_markup=get_keyboard_for_transaction_fail(node))
         return
 
+    node.expiry_date = get_expiry_date(node)
+    node.update()
+    await state.update_data(node=node)
+
     await callback.message.edit_text(text="Check transaction on blockchain: OK\n"
                                           "Save transaction on database: OK\n"
                                           "Transaction approved\n\n"
@@ -198,7 +199,17 @@ def save_transaction(trn: Transaction) -> bool:
 def payment_state(node: Node) -> float:
     delta = relativedelta(datetime.now(), node.payment_date)
     duty = (delta.months + 1) * node.cost
+    paid = get_transaction_summ(node)
+    return paid - duty
 
+
+def get_expiry_date(node: Node):
+    summ = get_transaction_summ(node)
+    month = round(summ / node.cost)
+    return node.payment_date + relativedelta(months=month)
+
+
+def get_transaction_summ(node: Node) -> float:
     transactions = (Transaction
                     .select(Transaction.value, Transaction.decimals)
                     .where(Transaction.node_id == node.id)
@@ -209,8 +220,7 @@ def payment_state(node: Node) -> float:
         unit = (unit_name(transaction.decimals), "ether")[transaction.decimals == None]
         transactions_sum += float(
             Web3.from_wei(Web3.to_int(hexstr=transaction.value), unit))
-    paid = transactions_sum
-    return paid - duty
+    return transactions_sum
 
 
 def unit_name(decimals) -> str:
