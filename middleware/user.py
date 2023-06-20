@@ -1,7 +1,7 @@
 from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
-from data.database import get_user, set_user
+from data.models.user import User
 
 
 class UsersMiddleware(BaseMiddleware):
@@ -16,12 +16,15 @@ class UsersMiddleware(BaseMiddleware):
         user = state.get('user')
 
         if user is None:
-            database_user = get_user(data['event_from_user'].id)
+            database_user = User.get_or_none(User.telegram_id == data['event_from_user'].id)
         else:
             return await handler(event, data)
 
         if database_user is None:
-            database_user = set_user(data['event_from_user'].id, data['event_from_user'].username)
+            database_user = User.create(
+                telegram_id=data['event_from_user'].id,
+                telegram_name=data['event_from_user'].username)
+            database_user.save()
             await data['state'].update_data(user=database_user)
         else:
             await data['state'].update_data(user=database_user)
