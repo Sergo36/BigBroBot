@@ -6,7 +6,7 @@ from callbacks.report_callback_factory import ReportCallbackFactory
 def get_keyboard_for_report():
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="Payments report", callback_data=ReportCallbackFactory(action="payments_report")
+        text="Отчет по платежам", callback_data=ReportCallbackFactory(action="payments_report")
     )
     builder.adjust(1)
     return builder.as_markup()

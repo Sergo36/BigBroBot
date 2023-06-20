@@ -21,7 +21,7 @@ router = Router()
 async def send_message(message: Message, state: FSMContext):
     await state.set_state(States.notification)
     await message.answer(
-        text="Choose a section from the list below:",
+        text="Выберите действие из списка ниже:",
         reply_markup=get_keyboard_main_notification()
     )
 
@@ -32,7 +32,7 @@ async def send_message(message: Message, state: FSMContext):
 async def order_type(
         callback: types.CallbackQuery,
 ):
-    text = "Choose node type\n"
+    text = "Выберите тип ноды\n"
     query = NodeType.select(NodeType.id, NodeType.name)
     keyboard = get_keyboard_for_node_type(query)
     await callback.message.edit_text(
@@ -56,7 +56,12 @@ async def notification_type(
              .namedtuples())
 
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
+    await send_message(query, bot)
+    await bot.session.close()
+    await callback.answer()
 
+
+async def send_message(query: any, bot: Bot):
     for row in query:
         try:
             await bot.send_message(
@@ -68,6 +73,3 @@ async def notification_type(
                 reply_markup=get_keyboard_for_payment_notification(row.id))
         except Exception as err:
             print(f"Не удалось отправить уведомление {User.telegram_id}")
-    await bot.session.close()
-
-    await callback.answer()

@@ -26,7 +26,7 @@ router.callback_query.middleware(UsersMiddleware())
 @router.message(Command(commands=["start"]))
 async def cmd_start(message: Message):
     await message.answer(
-        text="Choose a section from the list below:",
+        text="Выберете раздел из списка ниже:",
         reply_markup=get_keyboard_main_menu()
     )
 
@@ -36,7 +36,7 @@ async def callback_start(
         callback: types.CallbackQuery
 ):
     await callback.message.edit_text(
-        text="Choose a section from the list below:",
+        text="Выберете раздел из списка ниже:",
         reply_markup=get_keyboard_main_menu())
 
 
@@ -52,11 +52,11 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
         .namedtuples())
     keyboard: None
     if len(user_nodes) > 0:
-        text = "Choose node from the list below:"
+        text = "Выберете ноду из списка ниже:"
         keyboard = get_keyboard_for_nodes_list(user_nodes)
         await state.set_state(States.nodes)
     else:
-        text = 'The list of nodes is empty. Order the first'
+        text = 'Список нод пуст. Закажите первую!!!'
         keyboard = get_keyboard_for_empty_nodes_list()
 
     await callback.message.edit_text(
@@ -67,7 +67,7 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(OrderCallbackFactory.filter(F.action == "new_order"))
 async def order(callback: types.CallbackQuery, state: FSMContext):
-    text = "Choose node type\n"
+    text = "Выберете тип ноды\n"
     query = NodeType.select(NodeType.id, NodeType.name)
     keyboard = get_keyboard_for_node_type(query)
     await state.set_state(States.order)
@@ -82,7 +82,7 @@ async def order(callback: types.CallbackQuery, state: FSMContext):
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        text="Action canceled",
+        text="Действие отменено",
         reply_markup=ReplyKeyboardRemove()
     )
 
@@ -90,7 +90,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
 @router.message(Command(commands=["report"]))
 async def report(message: Message):
     await message.answer(
-        text="Choose a report type from the list below:",
+        text="Выберете тип отчета из списка ниже:",
         reply_markup=get_keyboard_for_report()
     )
 

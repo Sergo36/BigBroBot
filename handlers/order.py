@@ -21,7 +21,7 @@ async def order_type(
     node_type = NodeType.get(NodeType.id == callback_data.node_type_id)
     await state.update_data(node_type=node_type)
     keyboard = get_keyboard_for_accept()
-    await callback.message.edit_text(text=f'Order cost: {node_type.cost.__str__()}', reply_markup=keyboard)
+    await callback.message.edit_text(text=f'Стоимость заказа: {node_type.cost.__str__()}', reply_markup=keyboard)
 
 
 @router.callback_query(
@@ -44,5 +44,5 @@ async def confirm_order(
         cost=node_type.cost,
         expiry_date=date
     )
-    await callback.answer(text="Order approved", show_alert=True)
-    await callback.message.edit_text(text="Choose a section from the list below:", reply_markup=keyboard)
+    await callback.answer(text="Заказ подтвержден", show_alert=True)
+    await callback.message.edit_text(text="Выберете действие из списка ниже:", reply_markup=keyboard)

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from aiogram import Router, F, types
-from aiogram.enums import ParseMode
 
 from callbacks.report_callback_factory import ReportCallbackFactory
 from data.models.node import Node
@@ -19,7 +18,7 @@ async def callback_payments_report(callback: types.CallbackQuery):
              .select(NodeType.id, NodeType.name)
              .namedtuples())
     await callback.message.edit_text(
-        text="Choose a node type from the list below:",
+        text="Выберете тип ноды из списка ниже:",
         reply_markup=get_keyboard_payments_report(query))
 
 

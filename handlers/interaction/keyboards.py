@@ -17,11 +17,11 @@ def get_keyboard_for_interactions(interactions):
 def get_keyboard_default_interaction():
     kb = InlineKeyboardBuilder()
     kb.button(
-        text="Back to interactions list",
+        text="Назак к списку взаимодействий",
         callback_data=NodesCallbackFactory(action="interaction")
     )
     kb.button(
-        text="Main menu",
+        text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu")
     )
     return kb.as_markup()

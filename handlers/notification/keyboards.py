@@ -7,7 +7,7 @@ from callbacks.notification_callback_factory import NotificationCallbackFactory
 def get_keyboard_main_notification():
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="Send notification", callback_data=NotificationCallbackFactory(action="send")
+        text="Отправить уведомления", callback_data=NotificationCallbackFactory(action="send")
     )
     builder.adjust(1)
     return builder.as_markup()
@@ -26,11 +26,11 @@ def get_keyboard_for_node_type(query):
 def get_keyboard_for_payment_notification(node_id):
     kb = InlineKeyboardBuilder()
     kb.button(
-        text="Payment",
+        text="Оплатить",
         callback_data=NotificationCallbackFactory(
             action="payment_node",
             node_id=node_id))
     kb.button(
-        text="Main menu",
+        text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu"))
     return kb.as_markup()

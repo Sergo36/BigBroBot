@@ -41,12 +41,12 @@ async def select_node(
     await state.update_data(node=node)
 
     difference = payment_state(node)
-    paid_text = ("Not paid", "Paid")[difference >= 0]
-    text1 = (f"duty: {difference}", f"prepaid: {difference}")[difference >= 0]
+    paid_text = ("Не оплачено", "Оплачено")[difference >= 0]
+    text1 = (f"долг: {difference}", f"предоплата: {difference}")[difference >= 0]
 
-    text = "Node information:\n\n"
-    text += f'Payments date: {node.payment_date.day} of every month\n' \
-            f'Payment state: {paid_text}, {text1}'
+    text = "Информация о ноде:\n\n"
+    text += f'Дата платежа: {node.payment_date.day} числа каждого месяца\n' \
+            f'Статус оплаты: {paid_text}, {text1}'
 
     await callback.message.edit_text(
         text=text,
@@ -78,8 +78,8 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     node = data.get('node')
 
-    text = f"To pay, transfer `{node.cost}` USDT in BEP20 chain to `{wallet_address}`\n\n" \
-           f"After confirming the transaction, send the hash of the transaction\n"
+    text = f"Для оплаты, переведите `{node.cost}` USDT в сети BEP20 на адрес `{wallet_address}`\n\n" \
+           f"После подтверждения транзакции сетью, отправьте хеш транзакции ответным сообщением\n"
     await callback.message.edit_text(
         text=text,
         parse_mode=ParseMode.MARKDOWN_V2,
@@ -102,7 +102,7 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         .where(NodeFields.node_id == node.id)
         .where(NodeDataType.name == "Obligatory")
         .namedtuples())
-    text = "Extended information \n"
+    text = "Расширенная информация\n"
     for data in node_data:
         text += f"\n{data.name}: {data.data}"
 
@@ -122,18 +122,18 @@ async def check_hash(message: Message, state: FSMContext):
     if callback is None:
         return
 
-    await callback.message.edit_text(text="Check transaction on blockchain: wait", reply_markup=get_keyboard_null())
+    await callback.message.edit_text(text="Проверка транзакции в блокчейне: ожидание", reply_markup=get_keyboard_null())
     trn, error_text = get_transaction_blockchain(transaction_hash)
 
     if trn is None:
         await callback.message.edit_text(
-            text="Check transaction on blockchain: fail\n"
+            text="Проверка транзакции в блокчейне: провал\n"
                  f"\t\t{error_text}",
             reply_markup=get_keyboard_for_transaction_fail(node))
         return
 
-    await callback.message.edit_text(text="Check transaction on blockchain: OK\n"
-                                          "Save transaction on database: wait",
+    await callback.message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
+                                          "Сохранение транзакции в базе данных: ожидание",
                                      reply_markup=get_keyboard_null())
 
     trn.owner = user.id
@@ -142,8 +142,8 @@ async def check_hash(message: Message, state: FSMContext):
     ok, error_text = save_transaction(trn)
 
     if not ok:
-        await callback.message.edit_text(text="Check transaction on blockchain: OK\n"
-                                              "Save transaction on database: fail\n"
+        await callback.message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
+                                              "Сохранение транзакции в базе данных: провал\n"
                                               f"\t\t{error_text}",
                                          reply_markup=get_keyboard_for_transaction_fail(node))
         return
@@ -152,10 +152,10 @@ async def check_hash(message: Message, state: FSMContext):
     node.save()
     await state.update_data(node=node)
 
-    await callback.message.edit_text(text="Check transaction on blockchain: OK\n"
-                                          "Save transaction on database: OK\n"
-                                          "Transaction approved\n\n"
-                                          "Choose a action from the list below:",
+    await callback.message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
+                                          "Сохранение транзакции в базе данных: OK\n"
+                                          "Транзакция подтверждена\n\n"
+                                          "Выберете действие из списка ниже:",
                                      reply_markup=get_keyboard_for_node_extended_information(node))
     await state.update_data(callback=None)
 
@@ -164,21 +164,21 @@ def get_transaction_blockchain(transaction_hash: str):
     try:
         trn = get_transaction(transaction_hash)
     except TransactionNotFound:
-        text = "Error: Transaction not found."
+        text = "Ошибка: Транзакция не найдена в блокчейне."
         return None, text
     except Exception:
-        text = "Error: Unexpected error."
+        text = "Ошибка: Непредвиденная ошибка."
         return None, text
 
     if not transaction_valid(trn):
-        text = "Error: Transaction not valid."
+        text = "Ошибка: Транзакция не валидна."
         return None, text
 
     try:
         t_data = get_block_date(trn.block_hash)
         trn.transaction_date = t_data
     except:
-        text = "Error: Transaction date not found."
+        text = "Ошибка: Дата транзакции не определена."
         return None, text
 
     return trn, ""
@@ -188,10 +188,10 @@ def save_transaction(trn: Transaction) -> bool:
     try:
         trn.save(force_insert=True)
     except IntegrityError:
-        text = "Error: Transaction already exists."
+        text = "Ошибка: Транзакция уже существует."
         return False, text
     except Exception as err:
-        text = "Error: Unexpected error for saving."
+        text = "Ошибка: Непредвиденная ошибка при сохранении."
         return False, text
     return True, ""
 
