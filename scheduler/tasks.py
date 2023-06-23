@@ -15,6 +15,6 @@ async def send_payment_handlers(bot: Bot):
              .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name)
              .join(Node, on=(User.id == Node.owner))
              .join(NodeType, on=(Node.type == NodeType.id))
-             .where(Node.expiry_date <= datetime.now() + relativedelta(days=+5))
+             .where(Node.expiry_date <= datetime.now() + relativedelta(days=+5) and not Node.obsolete)
              .namedtuples())
     await send_message(query, bot)
