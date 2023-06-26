@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, types, Bot
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -71,5 +73,6 @@ async def send_message(query: any, bot: Bot):
                  f"Текущий период заканчивается {row.payment_date.day}\-го числа\! \n\n"
                  f"Для продления ноды нажми кнопку «***Payment***» ниже 👇",
                 reply_markup=get_keyboard_for_payment_notification(row.id))
+            await asyncio.sleep(5)
         except Exception as err:
             print(f"Не удалось отправить уведомление {User.telegram_id}")
