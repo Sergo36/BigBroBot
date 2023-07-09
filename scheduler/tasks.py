@@ -10,11 +10,11 @@ from handlers.notification.notification import send_message
 
 
 async def send_payment_handlers(bot: Bot):
-    print(datetime.now() + relativedelta(days=+5))
     query = (User
              .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name)
              .join(Node, on=(User.id == Node.owner))
              .join(NodeType, on=(Node.type == NodeType.id))
-             .where(Node.expiry_date <= datetime.now() + relativedelta(days=+5) and not Node.obsolete)
+             .where(Node.expiry_date <= datetime.now() + relativedelta(days=+5))
+             .where(Node.obsolete == False)
              .namedtuples())
     await send_message(query, bot)
