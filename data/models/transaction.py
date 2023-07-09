@@ -14,8 +14,7 @@ class Transaction(BaseModel):
     transaction_date = TimestampField(column_name='transaction_date')
     status = BooleanField(column_name='status')
     owner = ForeignKeyField(column_name='owner', model=User)
-    node_id = ForeignKeyField(column_name='node_id', model=Node)
-    account_id = ForeignKeyField(column_name='account_id', model=Account, null=True)
+    account_id = ForeignKeyField(column_name='account_id', model=Account)
     value = TextField(column_name='value')
     decimals = IntegerField(column_name='decimals')
 
