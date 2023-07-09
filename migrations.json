@@ -12,6 +12,8 @@
     "data.models.node_data_type.NodeDataType",
     "data.models.payment_data.PaymentData",
     "data.models.interaction.Interaction",
-    "data.models.node_interactions.NodeInteraction"
+    "data.models.node_interactions.NodeInteraction",
+    "data.models.account.Account",
+    "data.models.node_payments.NodePayments"
   ]
 }

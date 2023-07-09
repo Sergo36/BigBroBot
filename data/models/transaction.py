@@ -1,3 +1,4 @@
+from data.models.account import Account
 from data.models.base_model import BaseModel
 from data.models.user import User
 from data.models.node import Node
@@ -14,6 +15,7 @@ class Transaction(BaseModel):
     status = BooleanField(column_name='status')
     owner = ForeignKeyField(column_name='owner', model=User)
     node_id = ForeignKeyField(column_name='node_id', model=Node)
+    account_id = ForeignKeyField(column_name='account_id', model=Account, null=True)
     value = TextField(column_name='value')
     decimals = IntegerField(column_name='decimals')
 

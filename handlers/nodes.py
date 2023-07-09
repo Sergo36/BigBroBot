@@ -5,25 +5,23 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from dateutil.relativedelta import relativedelta
-from eth_utils.units import units
-from peewee import IntegrityError
-from web3 import Web3
-from web3.exceptions import TransactionNotFound
 
 from botStates import States
+from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.notification_callback_factory import NotificationCallbackFactory
+from data.models.account import Account
 from data.models.node import Node
 from data.models.node_data import NodeData
 from data.models.node_data_type import NodeDataType
 from data.models.node_fields import NodeFields
+from data.models.node_payments import NodePayments
 from data.models.payment_data import PaymentData
-from data.models.transaction import Transaction
-from keyboards.for_questions import get_keyboard_for_node_instance, \
-    get_keyboard_null, get_keyboard_for_node_extended_information, get_keyboard_for_transaction_fail
-from services.web3 import get_block_date
+from keyboards.common_keyboards import get_null_keyboard
+from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
+    get_keyboard_for_account_node_payment
 from middleware.user import UsersMiddleware
-from services.web3 import get_transaction, transaction_valid
+from services.transaction import check_hash, replenish_account
 
 router = Router()
 router.callback_query.middleware(UsersMiddleware())
@@ -40,13 +38,12 @@ async def select_node(
     node = Node.get(Node.id == callback_data.node_id)
     await state.update_data(node=node)
 
-    difference = payment_state(node)
-    paid_text = ("Не оплачено", "Оплачено")[difference >= 0]
-    text1 = (f"долг: {difference}", f"предоплата: {difference}")[difference >= 0]
+    paid = node.expiry_date >= datetime.now().date()
+    paid_text = ("Не оплачено", "Оплачено")[paid]
 
-    text = "Информация о ноде:\n\n"
-    text += f'Дата платежа: {node.payment_date.day} числа каждого месяца\n' \
-            f'Статус оплаты: {paid_text}, {text1}'
+    text = 'Информация о ноде:\n\n' \
+            f'Дата платежа: {node.payment_date.day} числа каждого месяца\n' \
+            f'Статус оплаты: {paid_text}'
 
     await callback.message.edit_text(
         text=text,
@@ -68,7 +65,7 @@ async def notification_payment(
 
 @router.callback_query(
     States.nodes,
-    NodesCallbackFactory.filter(F.action == "payment_node"))
+    NodesCallbackFactory.filter(F.action == "cash_payment"))
 async def nodes_payment(callback: types.CallbackQuery, state: FSMContext):
     await payment(callback, state)
 
@@ -86,6 +83,20 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=get_keyboard_for_node_extended_information(node),
     )
     await state.update_data(callback=callback)
+
+
+@router.message(
+    States.nodes,
+    F.text.regexp('0[x][0-9a-fA-F]{64}'))
+async def transaction_handler(message: Message, state: FSMContext):
+    data = await state.get_data()
+    node = data.get('node')
+    account = data.get('account')
+    back_step = NodesCallbackFactory(action="select_node", node_id=node.id)
+    trn = await check_hash(message, state, back_step)
+    if not (trn is None):
+        replenish_account(account, trn)
+        make_payment(account, node)  # to do show users paymeent state
 
 
 @router.callback_query(
@@ -109,91 +120,72 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text=text, reply_markup=get_keyboard_for_node_extended_information(node))
 
 
-@router.message(
+@router.callback_query(
     States.nodes,
-    F.text.regexp('0[x][0-9a-fA-F]{64}'))
-async def check_hash(message: Message, state: FSMContext):
-    transaction_hash = message.text
-    await message.delete()
+    NodesCallbackFactory.filter(F.action == "account_payment"))
+async def account_payment(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     user = data.get('user')
+    user_account = (
+        Account.select(Account.id)
+        .where(Account.user_id == user.id)
+        .namedtuples())
+
+    if len(user_account) == 1:
+        callback_data = AccountCallbackFactory(
+            action="select_account",
+            account_id=user_account.get().id
+        )
+        await select_account(callback, callback_data, state)
+        return
+    else:
+        text = "Выберете счет из списка ниже:"
+        keyboard = get_null_keyboard()
+    await callback.message.edit_text(
+        text=text,
+        reply_markup=keyboard
+    )
+
+
+@router.callback_query(
+    States.account,
+    AccountCallbackFactory.filter(F.action == "select_account"))
+async def select_account(
+        callback: types.CallbackQuery,
+        callback_data: AccountCallbackFactory,
+        state: FSMContext
+):
+    account = Account.get(Account.id == callback_data.account_id)
+    await state.update_data(account=account)
+    data = await state.get_data()
     node = data.get('node')
-    callback = data.get('callback')
-    if callback is None:
-        return
+    back_step = NodesCallbackFactory(action="select_node", node_id=node.id)
 
-    await callback.message.edit_text(text="Проверка транзакции в блокчейне: ожидание", reply_markup=get_keyboard_null())
-    trn, error_text = get_transaction_blockchain(transaction_hash)
+    if account.funds >= node.cost:
+        make_payment(account, node)
 
-    if trn is None:
-        await callback.message.edit_text(
-            text="Проверка транзакции в блокчейне: провал\n"
-                 f"\t\t{error_text}",
-            reply_markup=get_keyboard_for_transaction_fail(node))
-        return
-
-    await callback.message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
-                                          "Сохранение транзакции в базе данных: ожидание",
-                                     reply_markup=get_keyboard_null())
-
-    trn.owner = user.id
-    trn.node_id = node.id
-
-    ok, error_text = save_transaction(trn)
-
-    if not ok:
-        await callback.message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
-                                              "Сохранение транзакции в базе данных: провал\n"
-                                              f"\t\t{error_text}",
-                                         reply_markup=get_keyboard_for_transaction_fail(node))
-        return
-
-    node.expiry_date = get_expiry_date(node)
-    node.save()
-    await state.update_data(node=node)
-
-    await callback.message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
-                                          "Сохранение транзакции в базе данных: OK\n"
-                                          "Транзакция подтверждена\n\n"
-                                          "Выберете действие из списка ниже:",
-                                     reply_markup=get_keyboard_for_node_extended_information(node))
-    await state.update_data(callback=None)
+        await callback.message.edit_text(text="Нода успешно оплачена",
+                                         reply_markup=get_keyboard_for_account_node_payment(back_step))
+    else:
+        await callback.message.edit_text(text="На счете недостаточно средств",
+                                         reply_markup=get_keyboard_for_account_node_payment(back_step))
 
 
-def get_transaction_blockchain(transaction_hash: str):
-    try:
-        trn = get_transaction(transaction_hash)
-    except TransactionNotFound:
-        text = "Ошибка: Транзакция не найдена в блокчейне."
-        return None, text
-    except Exception:
-        text = "Ошибка: Непредвиденная ошибка."
-        return None, text
+def make_payment(account: Account, node: Node):
+    if account.funds >= node.cost:
+        node_payment = NodePayments()
+        node_payment.account_id = account.id
+        node_payment.node_id = node.id
+        node_payment.value = node.cost
+        node_payment.save()
 
-    if not transaction_valid(trn):
-        text = "Ошибка: Транзакция не валидна."
-        return None, text
+        account.funds = account.funds - node.cost
+        account.save()
 
-    try:
-        t_data = get_block_date(trn.block_hash)
-        trn.transaction_date = t_data
-    except:
-        text = "Ошибка: Дата транзакции не определена."
-        return None, text
-
-    return trn, ""
-
-
-def save_transaction(trn: Transaction) -> bool:
-    try:
-        trn.save(force_insert=True)
-    except IntegrityError:
-        text = "Ошибка: Транзакция уже существует."
-        return False, text
-    except Exception as err:
-        text = "Ошибка: Непредвиденная ошибка при сохранении."
-        return False, text
-    return True, ""
+        node.expiry_date = get_expiry_date(node)
+        node.save()
+        return True
+    return False
 
 
 def payment_state(node: Node) -> float:
@@ -210,21 +202,12 @@ def get_expiry_date(node: Node):
 
 
 def get_transaction_summ(node: Node) -> float:
-    transactions = (Transaction
-                    .select(Transaction.value, Transaction.decimals)
-                    .where(Transaction.node_id == node.id)
+    transactions = (NodePayments
+                    .select(NodePayments.value)
+                    .where(NodePayments.node_id == node.id)
                     .namedtuples())
 
     transactions_sum: float = 0
     for transaction in transactions:
-        unit = (unit_name(transaction.decimals), "ether")[transaction.decimals == None]
-        transactions_sum += float(
-            Web3.from_wei(Web3.to_int(hexstr=transaction.value), unit))
+        transactions_sum += transaction.value
     return transactions_sum
-
-
-def unit_name(decimals) -> str:
-    for name, places in units.items():
-        if places == (10 ** decimals):
-            return name
-    return None

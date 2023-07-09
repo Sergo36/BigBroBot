@@ -6,3 +6,4 @@ class States(StatesGroup):
     order = State()
     notification = State()
     interaction = State()
+    account = State()
