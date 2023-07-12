@@ -10,7 +10,7 @@ from data.models.account import Account
 from data.models.payment_data import PaymentData
 from handlers.account.keyboards import get_keyboard_for_account_list, get_keyboard_for_account_instance, \
     get_keyboard_for_replenish_account
-from services.transaction import check_hash
+from services.transaction import check_hash, replenish_account
 
 router = Router()
 
@@ -79,7 +79,7 @@ async def account_answer(account: Account, callback: types.CallbackQuery):
 @router.callback_query(
     States.account,
     AccountCallbackFactory.filter(F.action == "replenish_account"))
-async def replenish_account(
+async def internal_replenish_account(
         callback: types.CallbackQuery,
         state: FSMContext):
     await payment(callback, state)
@@ -111,5 +111,9 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
     States.account,
     F.text.regexp('0[x][0-9a-fA-F]{64}'))
 async def transaction_handler(message: Message, state: FSMContext):
+    data = await state.get_data()
+    account = data.get('account')
     back_step = AccountCallbackFactory(action="back_step_account")
-    await check_hash(message, state, back_step)
+    trn = await check_hash(message, state, back_step)
+    if not (trn is None):
+        replenish_account(account, trn)
