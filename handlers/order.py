@@ -42,7 +42,8 @@ async def confirm_order(
         type=node_type.id,
         payment_date=date,
         cost=node_type.cost,
-        expiry_date=date
+        expiry_date=date,
+        obsolete=False
     )
     await callback.answer(text="Заказ подтвержден", show_alert=True)
     await callback.message.edit_text(text="Выберете действие из списка ниже:", reply_markup=keyboard)
