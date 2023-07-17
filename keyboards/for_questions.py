@@ -12,13 +12,13 @@ from callbacks.main_callback_factory import MainCallbackFactory
 def get_keyboard_main_menu():
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="Новый заказ", callback_data=OrderCallbackFactory(action="new_order")
+        text="\U0001F6D2 Новый заказ", callback_data=OrderCallbackFactory(action="new_order")
     )
     builder.button(
-        text="Список нод", callback_data=NodesCallbackFactory(action="nodes_list")
+        text="🗂Мои ноды", callback_data=NodesCallbackFactory(action="nodes_list")
     )
     builder.button(
-        text="Мой счет", callback_data=AccountCallbackFactory(action="accounts_list")
+        text="\U0001F4B0 Мой счет", callback_data=AccountCallbackFactory(action="accounts_list")
     )
     builder.adjust(2)
     return builder.as_markup()
