@@ -1,10 +1,8 @@
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
-from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
-
+from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
-from callbacks.notification_callback_factory import NotificationCallbackFactory
 from callbacks.order_callback_factory import OrderCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
 
@@ -55,13 +53,13 @@ def get_keyboard_for_empty_nodes_list() -> ReplyKeyboardMarkup:
 
 def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="Оплатить со счета", callback_data=NodesCallbackFactory(
+    kb.button(text="➕ Оплатить со счета", callback_data=NodesCallbackFactory(
         action="account_payment"))
-    kb.button(text="Оплатить за валюту", callback_data=NodesCallbackFactory(
+    kb.button(text="💸 Оплатить за валюту", callback_data=NodesCallbackFactory(
         action="cash_payment"))
-    kb.button(text="Расширенная информация", callback_data=NodesCallbackFactory(
+    kb.button(text="📕 Расширенная информация", callback_data=NodesCallbackFactory(
         action="extended_information"))
-    kb.button(text="Взаимодействия", callback_data=NodesCallbackFactory(
+    kb.button(text="🔄 Взаимодействия", callback_data=NodesCallbackFactory(
         action="interaction"))
     kb.button(text="Назад к списку нод", callback_data=NodesCallbackFactory(
         action="nodes_list"))
