@@ -4,4 +4,4 @@ from typing import Optional
 
 class ReportCallbackFactory(CallbackData, prefix="report"):
     action: str
-    node_type: Optional[int]
+    node_type: Optional[int] = None

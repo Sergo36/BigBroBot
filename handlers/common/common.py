@@ -1,7 +1,7 @@
 from aiogram import Router, types
-from aiogram.filters import Command, Text
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message
 
 from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
@@ -74,16 +74,6 @@ async def order(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         text=text,
         reply_markup=keyboard
-    )
-
-
-@router.message(Command(commands=["cancel"]))
-@router.message(Text(text="cancel", ignore_case=True))
-async def cmd_cancel(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer(
-        text="Действие отменено",
-        reply_markup=ReplyKeyboardRemove()
     )
 
 
