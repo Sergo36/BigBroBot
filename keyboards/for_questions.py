@@ -85,12 +85,17 @@ def get_keyboard_for_account_node_payment(back_step: CallbackData) -> ReplyKeybo
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
+
 def get_keyboard_for_node_type(query):
     kb = InlineKeyboardBuilder()
     for node_type in query:
         kb.button(
             text=node_type.name,
             callback_data=OrderCallbackFactory(action="select_type", node_type_id=node_type.id))
+    kb.button(
+        text="Индивидуальный заказ",
+        callback_data=OrderCallbackFactory(action="individual_order")
+    )
     kb.button(
         text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu"))

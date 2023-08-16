@@ -12,8 +12,7 @@ from handlers.report import report_handler
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from scheduler.tasks import send_payment_handlers
-
-from datetime import datetime, timedelta
+from middleware.data_forward import DataForward
 
 # log
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +22,8 @@ async def main():
 
     bot = Bot(token=config.TOKEN)
     dp = Dispatcher()
+
+    dp.message.middleware(DataForward(bot))
 
     dp.include_routers(notification.router)
     dp.include_routers(nodes.router)

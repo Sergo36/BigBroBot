@@ -1,5 +1,8 @@
 from datetime import datetime
 from aiogram import Router, F, types
+from aiogram.types import Message
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from callbacks.order_callback_factory import OrderCallbackFactory
 from data.models.node_type import NodeType
 from data.models.node import Node
@@ -47,3 +50,31 @@ async def confirm_order(
     )
     await callback.answer(text="Заказ подтвержден", show_alert=True)
     await callback.message.edit_text(text="Выберете действие из списка ниже:", reply_markup=keyboard)
+
+
+@router.callback_query(
+    States.order,
+    OrderCallbackFactory.filter(F.action == "individual_order"))
+async def individual_order(
+        callback: types.CallbackQuery,
+        state: FSMContext
+):
+    await state.set_state(States.identification_order)
+    await callback.message.edit_text("Напишите название проекта в котором вы хотите принять участие.\n"\
+                                     "Укажите любую ссылку на контактную информацию проекта (Web site/Docs/GitHub/Discord)")
+
+
+@router.message(
+    States.identification_order)
+async def transaction_handler(message: Message, state: FSMContext):
+    await state.set_state(States.order)
+    bot = state.bot
+
+    await message.answer(
+        text="Заказ принят мы свяжемся с вами для уточнения деталей",
+        reply_markup=get_keyboard_for_order_confirm()
+    )
+
+    await bot.send_message(chat_id=-915512097, text=f"Username: @{message.from_user.username}\n" \
+                                                   f"Telegram full name: {message.from_user.full_name}\n" \
+                                                   f"Message text: {message.text}")
