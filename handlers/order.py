@@ -1,7 +1,6 @@
 from datetime import datetime
-from aiogram import Router, F, types
+from aiogram import Router, F, types, Bot
 from aiogram.types import Message
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from callbacks.order_callback_factory import OrderCallbackFactory
 from data.models.node_type import NodeType
@@ -66,9 +65,8 @@ async def individual_order(
 
 @router.message(
     States.identification_order)
-async def transaction_handler(message: Message, state: FSMContext):
+async def transaction_handler(message: Message, state: FSMContext, bot: Bot):
     await state.set_state(States.order)
-    bot = state.bot
 
     await message.answer(
         text="Заказ принят мы свяжемся с вами для уточнения деталей",
