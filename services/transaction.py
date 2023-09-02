@@ -48,9 +48,8 @@ async def check_hash(message: Message, state: FSMContext, back_step: CallbackDat
 
     await bot_message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
                                           "Сохранение транзакции в базе данных: OK\n"
-                                          "Транзакция подтверждена\n\n"
-                                          "Выберете действие из списка ниже:",
-                                     reply_markup=get_keyboard_for_transaction_verify(back_step))
+                                          "Транзакция подтверждена\n\n",
+                                     reply_markup=get_null_keyboard())
     await state.update_data(callback=None)
     return trn
 

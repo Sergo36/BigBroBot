@@ -5,6 +5,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from dateutil.relativedelta import relativedelta
+from web3 import Web3
 
 from botStates import States
 from callbacks.account_callback_factory import AccountCallbackFactory
@@ -17,11 +18,13 @@ from data.models.node_data_type import NodeDataType
 from data.models.node_fields import NodeFields
 from data.models.node_payments import NodePayments
 from data.models.payment_data import PaymentData
+from data.models.transaction import Transaction
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
     get_keyboard_for_account_node_payment
+from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
-from services.transaction import check_hash, replenish_account
+from services.transaction import check_hash, replenish_account, unit_name
 
 router = Router()
 router.callback_query.middleware(UsersMiddleware())
@@ -96,7 +99,26 @@ async def transaction_handler(message: Message, state: FSMContext):
     trn = await check_hash(message, state, back_step)
     if not (trn is None):
         replenish_account(account, trn)
-        make_payment(account, node)  # to do show users paymeent state
+        if make_payment(account, node):
+            unit = (unit_name(trn.decimals), "ether")[trn.decimals == None]
+            value = float(Web3.from_wei(Web3.to_int(hexstr=trn.value), unit))
+
+            await message.answer(text=f"Хеш транзакции:   {trn.transaction_hash}\n"
+                                    f"Сумма в транзакции: {value}\n"
+                                    f"Аккаунт пополления: {account.id}\n"
+                                    f"Назначение платежа: Нода {node.type.name} ({node.id})\n"
+                                    f"Сумма платежа:      {node.cost }")
+        else:
+            unit = (unit_name(trn.decimals), "ether")[trn.decimals == None]
+            value = float(Web3.from_wei(Web3.to_int(hexstr=trn.value), unit))
+            await message.answer(text=f"Хеш транзакции:   {trn.transaction_hash}\n"
+                                      f"Сумма в транзакции: {value}\n"
+                                      f"Аккаунт пополления: {account.id}\n"
+                                      f"Назначение платежа: Аккаунт ({account.id})\n"
+                                      f"Сумма платежа:      {value}")
+        await message.answer(
+            text="Выберете действие из списка ниже:",
+            reply_markup=get_keyboard_for_transaction_verify(back_step))
 
 
 @router.callback_query(
@@ -162,13 +184,19 @@ async def select_account(
     back_step = NodesCallbackFactory(action="select_node", node_id=node.id)
 
     if account.funds >= node.cost:
-        make_payment(account, node)
+        if make_payment(account, node):
+            await callback.message.answer(
+                text=f"Аккаунт списания:   {account.id}\n"
+                     f"Назначение платежа: Нода {node.type.name} ({node.id})\n"
+                     f"Сумма платежа:      {node.cost}\n")
 
-        await callback.message.edit_text(text="Нода успешно оплачена",
-                                         reply_markup=get_keyboard_for_account_node_payment(back_step))
+        await callback.message.answer(
+            text="Нода успешно оплачена",
+            reply_markup=get_keyboard_for_account_node_payment(back_step))
     else:
-        await callback.message.edit_text(text="На счете недостаточно средств",
-                                         reply_markup=get_keyboard_for_account_node_payment(back_step))
+        await callback.message.answer(
+            text="На счете недостаточно средств",
+            reply_markup=get_keyboard_for_account_node_payment(back_step))
 
 
 def make_payment(account: Account, node: Node):
@@ -211,3 +239,9 @@ def get_transaction_summ(node: Node) -> float:
     for transaction in transactions:
         transactions_sum += transaction.value
     return transactions_sum
+
+
+class Check:
+    transaction: Transaction
+    account: Account = None
+    node: Node = None
