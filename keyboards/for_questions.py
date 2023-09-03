@@ -103,8 +103,6 @@ def get_keyboard_for_node_type(query):
         text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu").pack())
     kb.row(mm_button)
-
-    kb.adjust(len(query), 1)
     return kb.as_markup()
 
 
