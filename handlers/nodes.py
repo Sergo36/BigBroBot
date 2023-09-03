@@ -103,17 +103,19 @@ async def transaction_handler(message: Message, state: FSMContext):
             unit = (unit_name(trn.decimals), "ether")[trn.decimals == None]
             value = float(Web3.from_wei(Web3.to_int(hexstr=trn.value), unit))
 
-            await message.answer(text=f"Хеш транзакции:   {trn.transaction_hash}\n"
-                                    f"Сумма в транзакции: {value}\n"
-                                    f"Аккаунт пополления: {account.id}\n"
-                                    f"Назначение платежа: Нода {node.type.name} ({node.id})\n"
-                                    f"Сумма платежа:      {node.cost }")
+            await message.answer(text=f"Хеш транзакции: {trn.transaction_hash}\n"
+                                      f"Дата транзакции: {datetime.fromtimestamp(trn.transaction_date)}\n"
+                                      f"Сумма в транзакции: {value}\n"
+                                      f"Аккаунт пополнения: {account.id}\n"
+                                      f"Назначение платежа: Нода {node.type.name} ({node.id})\n"
+                                      f"Сумма платежа: {node.cost }")
         else:
             unit = (unit_name(trn.decimals), "ether")[trn.decimals == None]
             value = float(Web3.from_wei(Web3.to_int(hexstr=trn.value), unit))
             await message.answer(text=f"Хеш транзакции:   {trn.transaction_hash}\n"
+                                      f"Дата транзакции: {datetime.fromtimestamp(trn.transaction_date)}\n"
                                       f"Сумма в транзакции: {value}\n"
-                                      f"Аккаунт пополления: {account.id}\n"
+                                      f"Аккаунт пополнения: {account.id}\n"
                                       f"Назначение платежа: Аккаунт ({account.id})\n"
                                       f"Сумма платежа:      {value}")
         await message.answer(
