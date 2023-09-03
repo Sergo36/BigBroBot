@@ -92,13 +92,18 @@ def get_keyboard_for_node_type(query):
         kb.button(
             text=node_type.name,
             callback_data=OrderCallbackFactory(action="select_type", node_type_id=node_type.id))
-    kb.button(
+    kb.adjust(2)
+
+    individual = InlineKeyboardButton(
         text="Индивидуальный заказ",
-        callback_data=OrderCallbackFactory(action="individual_order")
-    )
-    kb.button(
+        callback_data=OrderCallbackFactory(action="individual_order").pack())
+    kb.row(individual)
+
+    mm_button = InlineKeyboardButton(
         text="Главное меню",
-        callback_data=MainCallbackFactory(action="main_menu"))
+        callback_data=MainCallbackFactory(action="main_menu").pack())
+    kb.row(mm_button)
+
     kb.adjust(len(query), 1)
     return kb.as_markup()
 
