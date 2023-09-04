@@ -1,16 +1,23 @@
+from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 
 
-def get_keyboard_for_interactions(interactions):
+def get_keyboard_for_interactions(interactions, node):
     kb = InlineKeyboardBuilder()
     for interaction in interactions:
         kb.button(
             text=interaction.name,
             callback_data=interaction.callback)
     kb.adjust(3)
+
+    back_button = InlineKeyboardButton(
+        text="Назад к выбранной ноде",
+        callback_data=NodesCallbackFactory(action="select_node", node_id=node.id).pack())
+    kb.row(back_button)
+
     return kb.as_markup()
 
 

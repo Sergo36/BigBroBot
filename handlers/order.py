@@ -3,6 +3,7 @@ from aiogram import Router, F, types, Bot
 from aiogram.types import Message
 
 from callbacks.order_callback_factory import OrderCallbackFactory
+from data.models.node_interactions import NodeInteraction
 from data.models.node_type import NodeType
 from data.models.node import Node
 from aiogram.fsm.context import FSMContext
@@ -31,7 +32,8 @@ async def order_type(
     OrderCallbackFactory.filter(F.action == "confirm"))
 async def confirm_order(
         callback: types.CallbackQuery,
-        state: FSMContext
+        state: FSMContext,
+        bot: Bot
 ):
     data = await state.get_data()
     node_type = data.get('node_type')
@@ -39,7 +41,7 @@ async def confirm_order(
     keyboard = get_keyboard_for_order_confirm()
 
     date = datetime.now()
-    Node.create(
+    node = Node.create(
         owner=user.id,
         type=node_type.id,
         payment_date=date,
@@ -47,6 +49,17 @@ async def confirm_order(
         expiry_date=date,
         obsolete=False
     )
+
+    if node_type.name.lower() == 'subspace':
+        NodeInteraction.create(
+            node_id=node.id,
+            node_interaction_id=2
+        )
+        await bot.send_message(
+            chat_id=-915512097,
+            text=f"Username: @{callback.from_user.username}\n" \
+                 f"Заказал ноду subspace")
+
     await callback.answer(text="Заказ подтвержден", show_alert=True)
     await callback.message.edit_text(text="Выберете действие из списка ниже:", reply_markup=keyboard)
 

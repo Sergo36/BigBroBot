@@ -8,3 +8,7 @@ class States(StatesGroup):
     notification = State()
     interaction = State()
     account = State()
+
+
+class SubSpace(StatesGroup):
+    interaction_wallet = State()

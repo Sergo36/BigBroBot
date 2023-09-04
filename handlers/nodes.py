@@ -31,7 +31,6 @@ router.callback_query.middleware(UsersMiddleware())
 
 
 @router.callback_query(
-    States.nodes,
     NodesCallbackFactory.filter(F.action == "select_node"))
 async def select_node(
         callback: types.CallbackQuery,
@@ -132,9 +131,8 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
 
     node_data = (
         NodeData.select(NodeData.name, NodeData.data)
-        .join(NodeFields, on=(NodeData.id == NodeFields.node_data_id))
         .join(NodeDataType, on=(NodeData.type == NodeDataType.id))
-        .where(NodeFields.node_id == node.id)
+        .where(NodeData.node_id == node.id)
         .where(NodeDataType.name == "Obligatory")
         .namedtuples())
     text = "Расширенная информация\n"
