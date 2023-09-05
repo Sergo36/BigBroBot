@@ -54,7 +54,6 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
     if len(user_nodes) > 0:
         text = "Выберете ноду из списка ниже:"
         keyboard = get_keyboard_for_nodes_list(user_nodes)
-        await state.set_state(States.nodes)
     else:
         text = 'Список нод пуст. Закажите первую!!!'
         keyboard = get_keyboard_for_empty_nodes_list()

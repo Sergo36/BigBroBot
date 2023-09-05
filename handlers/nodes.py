@@ -39,6 +39,7 @@ async def select_node(
 ):
     node = Node.get(Node.id == callback_data.node_id)
     await state.update_data(node=node)
+    await state.set_state(States.nodes)
 
     paid = node.expiry_date > datetime.now().date()
     paid_text = ("Не оплачено", "Оплачено")[paid]
