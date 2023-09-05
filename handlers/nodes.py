@@ -40,7 +40,7 @@ async def select_node(
     node = Node.get(Node.id == callback_data.node_id)
     await state.update_data(node=node)
 
-    paid = node.expiry_date >= datetime.now().date()
+    paid = node.expiry_date > datetime.now().date()
     paid_text = ("Не оплачено", "Оплачено")[paid]
 
     text = 'Информация о ноде:\n\n' \
@@ -70,6 +70,33 @@ async def notification_payment(
     NodesCallbackFactory.filter(F.action == "cash_payment"))
 async def nodes_payment(callback: types.CallbackQuery, state: FSMContext):
     await payment(callback, state)
+
+
+@router.callback_query(
+    States.nodes,
+    NodesCallbackFactory.filter(F.action == "account_payment"))
+async def account_payment(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    user = data.get('user')
+    user_account = (
+        Account.select(Account.id)
+        .where(Account.user_id == user.id)
+        .namedtuples())
+
+    if len(user_account) == 1:
+        callback_data = AccountCallbackFactory(
+            action="select_account",
+            account_id=user_account.get().id
+        )
+        await select_account(callback, callback_data, state)
+        return
+    else:
+        text = "Выберете счет из списка ниже:"
+        keyboard = get_null_keyboard()
+    await callback.message.edit_text(
+        text=text,
+        reply_markup=keyboard
+    )
 
 
 async def payment(callback: types.CallbackQuery, state: FSMContext):
@@ -140,33 +167,6 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         text += f"\n{data.name}: {data.data}"
 
     await callback.message.edit_text(text=text, reply_markup=get_keyboard_for_node_extended_information(node))
-
-
-@router.callback_query(
-    States.nodes,
-    NodesCallbackFactory.filter(F.action == "account_payment"))
-async def account_payment(callback: types.CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    user = data.get('user')
-    user_account = (
-        Account.select(Account.id)
-        .where(Account.user_id == user.id)
-        .namedtuples())
-
-    if len(user_account) == 1:
-        callback_data = AccountCallbackFactory(
-            action="select_account",
-            account_id=user_account.get().id
-        )
-        await select_account(callback, callback_data, state)
-        return
-    else:
-        text = "Выберете счет из списка ниже:"
-        keyboard = get_null_keyboard()
-    await callback.message.edit_text(
-        text=text,
-        reply_markup=keyboard
-    )
 
 
 @router.callback_query(

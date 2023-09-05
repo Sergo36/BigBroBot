@@ -118,11 +118,11 @@ def get_keyboard_for_accept() -> ReplyKeyboardMarkup:
     return kb.as_markup(resize_keyboard=True)
 
 
-def get_keyboard_for_order_confirm() -> ReplyKeyboardMarkup:
+def get_keyboard_for_order_confirm(node) -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(
-        text="Новый заказ",
-        callback_data=OrderCallbackFactory(action="new_order"))
+        text="Оплатить заказ",
+        callback_data=NodesCallbackFactory(action="select_node", node_id=node.id))
     kb.button(
         text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu"))

@@ -38,7 +38,6 @@ async def confirm_order(
     data = await state.get_data()
     node_type = data.get('node_type')
     user = data.get('user')
-    keyboard = get_keyboard_for_order_confirm()
 
     date = datetime.now()
     node = Node.create(
@@ -61,6 +60,7 @@ async def confirm_order(
                  f"Заказал ноду subspace")
 
     await callback.answer(text="Заказ подтвержден", show_alert=True)
+    keyboard = get_keyboard_for_order_confirm(node)
     await callback.message.edit_text(text="Выберете действие из списка ниже:", reply_markup=keyboard)
 
 
