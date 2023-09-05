@@ -72,12 +72,14 @@ async def add_wallet(
 @router.message(
     SubSpace.interaction_wallet,
     F.text.regexp('st[0-9a-zA-Z]{47}'))
-async def set_wallet_address(message: Message):
+async def set_wallet_address(message: Message, state: FSMContext):
+    node_id = (await state.get_data()).get("node").id
     NodeData.get_or_create(
         data=message.text,
         defaults={
             'name': "Wallet address",
-            'type': 1
+            'type': 1,
+            'node_id': node_id
         })
 
     await message.answer(
