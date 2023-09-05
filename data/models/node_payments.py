@@ -1,4 +1,4 @@
-from peewee import AutoField, ForeignKeyField, DoubleField
+from peewee import AutoField, ForeignKeyField, DoubleField, DateTimeField
 
 from data.models.account import Account
 from data.models.base_model import BaseModel
@@ -10,6 +10,7 @@ class NodePayments(BaseModel):
     account_id = ForeignKeyField(column_name='account_id', model=Account)
     node_id = ForeignKeyField(column_name='node_id', model=Node)
     value = DoubleField(column_name='value')
+    payment_date = DateTimeField(column_name='payment_date')
 
     class Meta:
         table_name = 'node_payments'

@@ -1,9 +1,8 @@
 import os
 
-from aiogram import Router, types
+from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile, Message
-from magic_filter import F
 
 import config
 from botStates import States, SubSpace

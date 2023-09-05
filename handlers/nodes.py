@@ -15,7 +15,6 @@ from data.models.account import Account
 from data.models.node import Node
 from data.models.node_data import NodeData
 from data.models.node_data_type import NodeDataType
-from data.models.node_fields import NodeFields
 from data.models.node_payments import NodePayments
 from data.models.payment_data import PaymentData
 from data.models.transaction import Transaction
@@ -45,8 +44,8 @@ async def select_node(
     paid_text = ("Не оплачено", "Оплачено")[paid]
 
     text = 'Информация о ноде:\n\n' \
-            f'Дата платежа: {node.payment_date.day} числа каждого месяца\n' \
-            f'Статус оплаты: {paid_text}'
+            f'Статус оплаты: {paid_text}\n' \
+            f'Оплачено до: {node.expiry_date.strftime("%d-%m-%Y")}'
 
     await callback.message.edit_text(
         text=text,
@@ -206,6 +205,7 @@ def make_payment(account: Account, node: Node):
         node_payment.account_id = account.id
         node_payment.node_id = node.id
         node_payment.value = node.cost
+        node_payment.payment_date = datetime.now()
         node_payment.save()
 
         account.funds = account.funds - node.cost
