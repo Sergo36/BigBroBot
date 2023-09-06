@@ -116,4 +116,10 @@ async def transaction_handler(message: Message, state: FSMContext):
     back_step = AccountCallbackFactory(action="back_step_account")
     trn = await check_hash(message, state, back_step)
     if not (trn is None):
-        replenish_account(account, trn)
+        await replenish_account(account, trn, message)
+        await message.answer(
+            text="Выберите действие из списка ниже",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=get_keyboard_for_replenish_account(),
+        )
+

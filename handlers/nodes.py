@@ -23,7 +23,7 @@ from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard
     get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
-from services.transaction import check_hash, replenish_account, unit_name
+from services.transaction import check_hash, replenish_account
 
 router = Router()
 router.callback_query.middleware(UsersMiddleware())
@@ -124,26 +124,8 @@ async def transaction_handler(message: Message, state: FSMContext):
     back_step = NodesCallbackFactory(action="select_node", node_id=node.id)
     trn = await check_hash(message, state, back_step)
     if not (trn is None):
-        replenish_account(account, trn)
-        if make_payment(account, node):
-            unit = (unit_name(trn.decimals), "ether")[trn.decimals == None]
-            value = float(Web3.from_wei(Web3.to_int(hexstr=trn.value), unit))
-
-            await message.answer(text=f"Хеш транзакции: {trn.transaction_hash}\n"
-                                      f"Дата транзакции: {datetime.fromtimestamp(trn.transaction_date)}\n"
-                                      f"Сумма в транзакции: {value}\n"
-                                      f"Аккаунт пополнения: {account.id}\n"
-                                      f"Назначение платежа: Нода {node.type.name} ({node.id})\n"
-                                      f"Сумма платежа: {node.cost }")
-        else:
-            unit = (unit_name(trn.decimals), "ether")[trn.decimals == None]
-            value = float(Web3.from_wei(Web3.to_int(hexstr=trn.value), unit))
-            await message.answer(text=f"Хеш транзакции:   {trn.transaction_hash}\n"
-                                      f"Дата транзакции: {datetime.fromtimestamp(trn.transaction_date)}\n"
-                                      f"Сумма в транзакции: {value}\n"
-                                      f"Аккаунт пополнения: {account.id}\n"
-                                      f"Назначение платежа: Аккаунт ({account.id})\n"
-                                      f"Сумма платежа:      {value}")
+        await replenish_account(account, trn, message)
+        await make_payment(account, node, message)
         await message.answer(
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
@@ -212,12 +194,7 @@ async def select_account(
     back_step = NodesCallbackFactory(action="select_node", node_id=node.id)
 
     if account.funds >= node.cost:
-        if make_payment(account, node):
-            await callback.message.answer(
-                text=f"Аккаунт списания:   {account.id}\n"
-                     f"Назначение платежа: Нода {node.type.name} ({node.id})\n"
-                     f"Сумма платежа:      {node.cost}\n")
-
+        await make_payment(account, node, callback.message)
         await callback.message.answer(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
@@ -227,7 +204,7 @@ async def select_account(
             reply_markup=get_keyboard_for_account_node_payment(back_step))
 
 
-def make_payment(account: Account, node: Node):
+async def make_payment(account: Account, node: Node, message: Message):
     if account.funds >= node.cost:
         node_payment = NodePayments()
         node_payment.account_id = account.id
@@ -241,8 +218,13 @@ def make_payment(account: Account, node: Node):
 
         node.expiry_date = get_expiry_date(node)
         node.save()
-        return True
-    return False
+
+        await message.answer(
+            text=f"Аккаунт списания: {account.id}\n"
+                 f"Сумма платежа: {node.cost}\n"
+                 f"Остаток средства {account.funds}\n"
+                 f"Назначение платежа: {node.type.name} ({node.id})\n"
+                 f"Заказ оплачен до: {node.expiry_date.strftime('%d-%m-%Y')}")
 
 
 def payment_state(node: Node) -> float:

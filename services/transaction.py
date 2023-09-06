@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -8,7 +10,7 @@ from web3.exceptions import TransactionNotFound
 from data.models.account import Account
 from data.models.transaction import Transaction
 from keyboards.common_keyboards import get_null_keyboard
-from keyboards.transaction_keyboards import get_keyboard_for_transaction_fail, get_keyboard_for_transaction_verify
+from keyboards.transaction_keyboards import get_keyboard_for_transaction_fail
 
 from services.web3 import get_transaction, transaction_valid, get_block_date
 from eth_utils.units import units
@@ -54,11 +56,15 @@ async def check_hash(message: Message, state: FSMContext, back_step: CallbackDat
     return trn
 
 
-def replenish_account(account: Account, transaction: Transaction):
+async def replenish_account(account: Account, transaction: Transaction, message: Message):
     unit = (unit_name(transaction.decimals), "ether")[transaction.decimals == None]
     value = float(Web3.from_wei(Web3.to_int(hexstr=transaction.value), unit))
     account.funds += value
     account.save()
+    await message.answer(text=f"Хеш транзакции: {transaction.transaction_hash}\n"
+                              f"Дата транзакции: {datetime.fromtimestamp(transaction.transaction_date)}\n"
+                              f"Сумма в транзакции: {value}\n"
+                              f"Аккаунт пополнения: {account.id}")
 
 
 def get_transaction_blockchain(transaction_hash: str):
