@@ -1,6 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.order_callback_factory import OrderCallbackFactory
@@ -61,9 +62,11 @@ def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
         action="extended_information"))
     kb.button(text="🔄 Взаимодействия", callback_data=NodesCallbackFactory(
         action="interaction"))
+    kb.button(text="🗑 Отменить зказ", callback_data=NodesCallbackFactory(
+        action="confirm_obsolete"))
     kb.button(text="Назад к списку нод", callback_data=NodesCallbackFactory(
         action="nodes_list"))
-    kb.adjust(2, 1)
+    kb.adjust(2, 2, 1)
     return kb.as_markup(resize_keyboard=True)
 
 
@@ -80,6 +83,28 @@ def get_keyboard_for_node_extended_information(node) -> ReplyKeyboardMarkup:
 def get_keyboard_for_account_node_payment(back_step: CallbackData) -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="Назад", callback_data=back_step)
+    kb.button(text="Главное меню", callback_data=MainCallbackFactory(
+        action="main_menu"))
+    kb.adjust(1)
+    return kb.as_markup(resize_keyboard=True)
+
+
+def get_keyboard_for_obsolete_node(node):
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Да", callback_data=NodesCallbackFactory(
+        action="obsolete_node",
+        node_id=node.id))
+    kb.button(text="Нет", callback_data=NodesCallbackFactory(
+        action="select_node",
+        node_id=node.id))
+    kb.adjust(2)
+    return kb.as_markup(resize_keyboard=True)
+
+
+def get_keyboard_for_after_obsolete_node():
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Назад к списку нод", callback_data=NodesCallbackFactory(
+        action="nodes_list"))
     kb.button(text="Главное меню", callback_data=MainCallbackFactory(
         action="main_menu"))
     kb.adjust(1)

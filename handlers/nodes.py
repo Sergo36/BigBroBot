@@ -20,7 +20,7 @@ from data.models.payment_data import PaymentData
 from data.models.transaction import Transaction
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
-    get_keyboard_for_account_node_payment
+    get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
 from services.transaction import check_hash, replenish_account, unit_name
@@ -167,6 +167,34 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         text += f"\n{data.name}: {data.data}"
 
     await callback.message.edit_text(text=text, reply_markup=get_keyboard_for_node_extended_information(node))
+
+
+@router.callback_query(
+    States.nodes,
+    NodesCallbackFactory.filter(F.action == "confirm_obsolete"))
+async def obsolete_node(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    node = data.get('node')
+
+    await callback.message.edit_text(
+        text="Отменить заказ?",
+        reply_markup=get_keyboard_for_obsolete_node(node))
+
+
+@router.callback_query(
+    States.nodes,
+    NodesCallbackFactory.filter(F.action == "obsolete_node"))
+async def obsolete_node_yes(
+        callback: types.CallbackQuery,
+        callback_data: NodesCallbackFactory):
+    q = (Node
+         .update({Node.obsolete: True})
+         .where(Node.id == callback_data.node_id))
+    q.execute()
+
+    await callback.message.edit_text(text=f"Заказ {callback_data.node_id} отменен")
+    await callback.message.answer(text="Выберите действие из списка ниже", reply_markup=get_keyboard_for_after_obsolete_node())
+
 
 
 @router.callback_query(
