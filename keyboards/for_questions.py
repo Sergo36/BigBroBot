@@ -62,7 +62,7 @@ def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
         action="extended_information"))
     kb.button(text="🔄 Взаимодействия", callback_data=NodesCallbackFactory(
         action="interaction"))
-    kb.button(text="🗑 Отменить зказ", callback_data=NodesCallbackFactory(
+    kb.button(text="🗑 Отменить заказ", callback_data=NodesCallbackFactory(
         action="confirm_obsolete"))
     kb.button(text="Назад к списку нод", callback_data=NodesCallbackFactory(
         action="nodes_list"))

@@ -61,7 +61,7 @@ async def replenish_account(account: Account, transaction: Transaction, message:
     value = float(Web3.from_wei(Web3.to_int(hexstr=transaction.value), unit))
     account.funds += value
     account.save()
-    await message.answer(text=f"Хеш транзакции: {transaction.transaction_hash}\n"
+    await message.answer(text=f"Хэш транзакции: {transaction.transaction_hash}\n"
                               f"Дата транзакции: {datetime.fromtimestamp(transaction.transaction_date)}\n"
                               f"Сумма в транзакции: {value}\n"
                               f"Аккаунт пополнения: {account.id}")

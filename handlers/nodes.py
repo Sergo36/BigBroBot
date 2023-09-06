@@ -222,7 +222,7 @@ async def make_payment(account: Account, node: Node, message: Message):
         await message.answer(
             text=f"Аккаунт списания: {account.id}\n"
                  f"Сумма платежа: {node.cost}\n"
-                 f"Остаток средства {account.funds}\n"
+                 f"Остаток средств: {account.funds}\n"
                  f"Назначение платежа: {node.type.name} ({node.id})\n"
                  f"Заказ оплачен до: {node.expiry_date.strftime('%d-%m-%Y')}")
 
