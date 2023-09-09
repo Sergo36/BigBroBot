@@ -17,10 +17,10 @@ class UsersMiddleware(BaseMiddleware):
         state = await data['state'].get_data()
         user = state.get('user')
 
-        if user is None:
-            database_user = User.get_or_none(User.telegram_id == data['event_from_user'].id)
-        else:
+        if not(user is None):
             return await handler(event, data)
+
+        database_user = User.get_or_none(User.telegram_id == data['event_from_user'].id)
 
         if database_user is None:
             database_user = User.create(

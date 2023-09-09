@@ -48,7 +48,6 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
     user_nodes = (
         Node.select(Node.id, NodeType.name)
         .join(NodeType, on=(Node.type == NodeType.id))
-        # .where((Node.owner == user.id) and (Node.obsolete == False))
         .where(Node.owner == user.id, Node.obsolete == False)
         .order_by(Node.id)
         .namedtuples())
