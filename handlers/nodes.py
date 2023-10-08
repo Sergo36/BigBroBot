@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 from web3 import Web3
 
 from botStates import States
+from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.notification_callback_factory import NotificationCallbackFactory
@@ -75,7 +76,7 @@ async def nodes_payment(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(
     States.nodes,
     NodesCallbackFactory.filter(F.action == "account_payment"))
-async def account_payment(callback: types.CallbackQuery, state: FSMContext):
+async def account_payment(callback: types.CallbackQuery, state: FSMContext, notifier: TelegramNotifier):
     data = await state.get_data()
     user = data.get('user')
     user_account = (
@@ -88,7 +89,7 @@ async def account_payment(callback: types.CallbackQuery, state: FSMContext):
             action="select_account",
             account_id=user_account.get().id
         )
-        await select_account(callback, callback_data, state)
+        await select_account(callback, callback_data, state, notifier)
         return
     else:
         text = "Выберете счет из списка ниже:"
@@ -117,7 +118,7 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
 @router.message(
     States.nodes,
     F.text.regexp('0[x][0-9a-fA-F]{64}'))
-async def transaction_handler(message: Message, state: FSMContext):
+async def transaction_handler(message: Message, state: FSMContext, notifier: TelegramNotifier):
     data = await state.get_data()
     node = data.get('node')
     account = data.get('account')
@@ -129,6 +130,7 @@ async def transaction_handler(message: Message, state: FSMContext):
         await message.answer(
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
+        await notifier.emit(message.from_user, f"Оплата ноды {node.type.name}")
 
 
 @router.callback_query(
@@ -168,7 +170,8 @@ async def obsolete_node(callback: types.CallbackQuery, state: FSMContext):
     NodesCallbackFactory.filter(F.action == "obsolete_node"))
 async def obsolete_node_yes(
         callback: types.CallbackQuery,
-        callback_data: NodesCallbackFactory):
+        callback_data: NodesCallbackFactory,
+        notifier: TelegramNotifier):
     q = (Node
          .update({Node.obsolete: True})
          .where(Node.id == callback_data.node_id))
@@ -176,6 +179,8 @@ async def obsolete_node_yes(
 
     await callback.message.edit_text(text=f"Заказ {callback_data.node_id} отменен")
     await callback.message.answer(text="Выберите действие из списка ниже", reply_markup=get_keyboard_for_after_obsolete_node())
+
+    await notifier.emit(callback.from_user, f"Отмена заказа {callback_data.node_id}")
 
 
 
@@ -185,7 +190,8 @@ async def obsolete_node_yes(
 async def select_account(
         callback: types.CallbackQuery,
         callback_data: AccountCallbackFactory,
-        state: FSMContext
+        state: FSMContext,
+        notifier: TelegramNotifier
 ):
     account = Account.get(Account.id == callback_data.account_id)
     await state.update_data(account=account)
@@ -198,13 +204,14 @@ async def select_account(
         await callback.message.answer(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
+        await notifier.emit(callback.from_user, f"Оплата ноды {node.type.name}")
     else:
         await callback.message.answer(
             text="На счете недостаточно средств",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
 
 
-async def make_payment(account: Account, node: Node, message: Message):
+async def make_payment(account: Account, node: Node, message: types.Message):
     if account.funds >= node.cost:
         node_payment = NodePayments()
         node_payment.account_id = account.id
