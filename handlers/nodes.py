@@ -130,7 +130,9 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
         await message.answer(
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
-        await notifier.emit(message.from_user, f"Оплата ноды {node.type.name}")
+        if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
+            await notifier.emit(message.from_user, f"Оплата ноды {node.type.name}")
+
 
 
 @router.callback_query(
@@ -204,7 +206,8 @@ async def select_account(
         await callback.message.answer(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
-        await notifier.emit(callback.from_user, f"Оплата ноды {node.type.name}")
+        if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
+            await notifier.emit(callback.from_user, f"Оплата ноды {node.type.name}")
     else:
         await callback.message.answer(
             text="На счете недостаточно средств",
@@ -258,8 +261,3 @@ def get_transaction_summ(node: Node) -> float:
         transactions_sum += transaction.value
     return transactions_sum
 
-
-class Check:
-    transaction: Transaction
-    account: Account = None
-    node: Node = None

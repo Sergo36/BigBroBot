@@ -30,6 +30,7 @@ async def main():
 
     order.router.callback_query.middleware(notifier_forward)
     nodes.router.callback_query.middleware(notifier_forward)
+    nodes.router.message.middleware(notifier_forward)
 
     dp.include_routers(notification.router)
     dp.include_routers(nodes.router)
