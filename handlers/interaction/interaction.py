@@ -92,3 +92,25 @@ async def set_wallet_address_(message: Message):
     await message.answer(
         text="Неверный адрес кошелька. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
+
+@router.callback_query(
+    States.interaction,
+    TaskCallbackFactory.filter(F.action == "get_file"))
+async def get_file_interaction(
+        callback: types.CallbackQuery,
+        callback_data: TaskCallbackFactory,
+        state: FSMContext):
+    node_id = (await state.get_data()).get("node").id
+    file_path = f"{config.FILE_BASE_PATH}/{node_id}/{callback_data.data}"
+
+    if not os.path.exists(file_path):
+        text = "Файл не найден"
+        await callback.message.edit_text(
+            text=text,
+            reply_markup=get_keyboard_default_interaction()
+        )
+        return
+
+    file = FSInputFile(file_path)
+    await callback.message.answer_document(file)
+    await callback.answer()
