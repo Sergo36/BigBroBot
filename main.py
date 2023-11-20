@@ -5,6 +5,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from handlers import order, nodes
 from handlers.account import account
+from handlers.db_viewer import viewer
 from handlers.notification import notification
 from handlers.interaction import interaction
 from handlers.common import common
@@ -39,7 +40,7 @@ async def main():
     dp.include_routers(interaction.router)
     dp.include_routers(report_handler.router)
     dp.include_routers(common.router)
-
+    dp.include_routers(viewer.router)
 
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
     scheduler.add_job(send_payment_handlers, trigger='cron',

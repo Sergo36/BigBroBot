@@ -2,8 +2,12 @@ from data.models.account import Account
 from data.models.base_model import BaseModel
 from data.models.user import User
 from data.models.node import Node
-from peewee import TextField, BooleanField, ForeignKeyField, IntegerField, TimestampField
+from peewee import TextField, BooleanField, ForeignKeyField, IntegerField, TimestampField, Field
 
+
+class TransactionValue(TextField):
+    def python_value(self, value):
+        return f'{(int(value, base=16) / 1000000000000000000):5.2f}'
 
 class Transaction(BaseModel):
     transaction_hash = TextField(column_name='transaction_hash', primary_key=True)
@@ -15,7 +19,7 @@ class Transaction(BaseModel):
     status = BooleanField(column_name='status')
     owner = ForeignKeyField(column_name='owner', model=User)
     account_id = ForeignKeyField(column_name='account_id', model=Account)
-    value = TextField(column_name='value')
+    value = TransactionValue(column_name='value')
     decimals = IntegerField(column_name='decimals')
 
     class Meta:

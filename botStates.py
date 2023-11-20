@@ -12,3 +12,8 @@ class States(StatesGroup):
 
 class SubSpace(StatesGroup):
     interaction_wallet = State()
+
+
+class DbViewReportState(StatesGroup):
+    UserSelect = State()
+    NodeSelect = State()
