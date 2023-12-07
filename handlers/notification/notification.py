@@ -42,6 +42,32 @@ async def order_type(
         reply_markup=keyboard
     )
 
+@router.callback_query(
+    States.notification,
+    NotificationCallbackFactory.filter(F.action == "node_install")
+)
+async def install_notification(callback: types.CallbackQuery):
+    await callback.message.edit_text(text="Введите номер ноды")
+
+@router.message(
+    States.notification,
+    F.text.regexp('^[0-9]+$'))
+async  def send_notification(message: Message, bot: Bot):
+    node = Node.get_or_none(Node.id == message.text)
+
+    if node is None:
+        await message.answer(
+            text="Нода не найдена\n"
+                 "Введите идентификационный номер ноды"
+        )
+    else:
+        await bot.send_message(
+            chat_id=node.owner.telegram_id,
+            parse_mode=ParseMode.MARKDOWN_V2,
+            text=f"Дорогой нодранер, Ваша нода ***{node.type.name}*** установлена\!")
+
+
+
 
 @router.callback_query(
     States.notification,

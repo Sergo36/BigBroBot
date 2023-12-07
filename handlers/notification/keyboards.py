@@ -9,6 +9,9 @@ def get_keyboard_main_notification():
     builder.button(
         text="Отправить уведомления", callback_data=NotificationCallbackFactory(action="send")
     )
+    builder.button(
+        text="Уведомление об установке", callback_data=NotificationCallbackFactory(action="node_install")
+    )
     builder.adjust(1)
     return builder.as_markup()
 
