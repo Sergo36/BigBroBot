@@ -77,7 +77,7 @@ async def notification_type(
         callback_data: NotificationCallbackFactory
 ):
     query = (User
-             .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name)
+             .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name, Node.cost)
              .join(Node, on=(User.id == Node.owner))
              .join(NodeType, on=(Node.type == NodeType.id))
              .where(Node.type == callback_data.node_type_id)
@@ -96,8 +96,9 @@ async def send_message(query: any, bot: Bot):
                 chat_id=row.telegram_id,
                 parse_mode=ParseMode.MARKDOWN_V2,
                 text=f"♻️ Дорогой нодранер\! Напоминаем о продлении ноды ***{row.name}***\.\n"
-                 f"Текущий период заканчивается {row.payment_date.day}\-го числа\! \n\n"
-                 f"Для продления ноды нажми кнопку «***Payment***» ниже 👇",
+                     f"Стоимость проделния: {str(row.cost).replace('.', ',')} USDT\n"
+                     f"Текущий период заканчивается {row.payment_date.day}\-го числа\! \n\n"
+                     f"Для продления ноды нажми кнопку «***Payment***» ниже 👇",
                 reply_markup=get_keyboard_for_payment_notification(row.id))
             await asyncio.sleep(5)
         except Exception as err:
