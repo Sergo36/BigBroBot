@@ -54,7 +54,7 @@ def get_keyboard_for_empty_nodes_list() -> ReplyKeyboardMarkup:
 
 def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="➕ Оплатить со счета", callback_data=NodesCallbackFactory(
+    kb.button(text="💰 Оплатить со счета", callback_data=NodesCallbackFactory(
         action="account_payment"))
     kb.button(text="💸 Оплатить за валюту", callback_data=NodesCallbackFactory(
         action="cash_payment"))
