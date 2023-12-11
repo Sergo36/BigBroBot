@@ -150,9 +150,10 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         .namedtuples())
     text = "Расширенная информация\n"
     for data in node_data:
-        text += f"\n{data.name}: {data.data}"
+        data_text = data.data.replace('.', '\\.');
+        text += f"\n*{data.name}*: {data_text}"
 
-    await callback.message.edit_text(text=text, reply_markup=get_keyboard_for_node_extended_information(node))
+    await callback.message.edit_text(text=text, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=get_keyboard_for_node_extended_information(node))
 
 
 @router.callback_query(
