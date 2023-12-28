@@ -31,12 +31,13 @@ async def page_change(
 
 async def show_data(
         state: FSMContext,
-        callback: types.CallbackQuery):
+        callback: types.CallbackQuery,
+        back_step=None):
     await state.update_data(current_page=1)
-    await create_message(state, callback)
+    await create_message(state, callback, back_step)
 
 
-async def create_message(state: FSMContext, callback: types.CallbackQuery):
+async def create_message(state: FSMContext, callback: types.CallbackQuery, back_step=None):
     data = await state.get_data()
     current_page = data.get('current_page')
     db_table = data.get('db_table')
@@ -49,10 +50,10 @@ async def create_message(state: FSMContext, callback: types.CallbackQuery):
 
     await callback.message.edit_text(
         text=f"`{table_message(db_table, (current_page - 1) * data_count, current_page * data_count)}`", parse_mode=ParseMode.MARKDOWN_V2,
-        reply_markup=get_keyboard_for_table_message(current_page, last_page))
+        reply_markup=get_keyboard_for_table_message(current_page, last_page, back_step))
 
 
-def get_keyboard_for_table_message(current_page: int, last_page: int):
+def get_keyboard_for_table_message(current_page: int, last_page: int, back_step=None):
     builder = InlineKeyboardBuilder()
 
     builder.button(
@@ -64,9 +65,12 @@ def get_keyboard_for_table_message(current_page: int, last_page: int):
     builder.button(
         text="-->",
         callback_data=TableMessageCallbackFactory(action='page_change', new_page=current_page + 1))
+    callback_data = TableMessageCallbackFactory(action="exit")
+    if back_step != None:
+        callback_data = back_step
     builder.button(
         text="Exit",
-        callback_data=TableMessageCallbackFactory(action='exit'))
+        callback_data=callback_data)
 
     builder.adjust(3, 1)
     return builder.as_markup()

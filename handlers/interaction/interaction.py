@@ -93,6 +93,7 @@ async def set_wallet_address_(message: Message):
         text="Неверный адрес кошелька. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
 
+
 @router.callback_query(
     States.interaction,
     TaskCallbackFactory.filter(F.action == "get_file"))
