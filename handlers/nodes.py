@@ -5,7 +5,6 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from dateutil.relativedelta import relativedelta
-from web3 import Web3
 
 from botStates import States
 from bot_logging.telegram_notifier import TelegramNotifier
@@ -19,6 +18,7 @@ from data.models.node_data_type import NodeDataType
 from data.models.node_payments import NodePayments
 from data.models.payment_data import PaymentData
 from data.models.transaction import Transaction
+from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
     get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node
@@ -35,8 +35,7 @@ router.callback_query.middleware(UsersMiddleware())
 async def select_node(
         callback: types.CallbackQuery,
         callback_data: NodesCallbackFactory,
-        state: FSMContext
-):
+        state: FSMContext):
     node = Node.get(Node.id == callback_data.node_id)
     await state.update_data(node=node)
     await state.set_state(States.nodes)
@@ -134,7 +133,6 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
             await notifier.emit(message.from_user, f"Оплата ноды {node.type.name}")
 
 
-
 @router.callback_query(
     States.nodes,
     NodesCallbackFactory.filter(F.action == "extended_information"))
@@ -186,7 +184,6 @@ async def obsolete_node_yes(
     await notifier.emit(callback.from_user, f"Отмена заказа {callback_data.node_id}")
 
 
-
 @router.callback_query(
     States.account,
     AccountCallbackFactory.filter(F.action == "select_account"))
@@ -194,8 +191,7 @@ async def select_account(
         callback: types.CallbackQuery,
         callback_data: AccountCallbackFactory,
         state: FSMContext,
-        notifier: TelegramNotifier
-):
+        notifier: TelegramNotifier):
     account = Account.get(Account.id == callback_data.account_id)
     await state.update_data(account=account)
     data = await state.get_data()
@@ -262,3 +258,21 @@ def get_transaction_summ(node: Node) -> float:
         transactions_sum += transaction.value
     return transactions_sum
 
+
+@router.callback_query(
+    States.nodes,
+    NodesCallbackFactory.filter(F.action == "payments_history"))
+async def payments_history(
+        callback: types.CallbackQuery,
+        callback_data: NodesCallbackFactory,
+        state: FSMContext):
+    query = (NodePayments
+             .select(NodePayments.payment_date.alias("Date"), NodePayments.value.alias("Value"))
+             .where(NodePayments.node_id == callback_data.node_id)
+             .order_by(NodePayments.payment_date)
+             .namedtuples())
+    res = query.execute()
+    back_step = NodesCallbackFactory(action="select_node", node_id=callback_data.node_id)
+
+    await state.update_data(db_table=res)
+    await show_data(state, callback, back_step)

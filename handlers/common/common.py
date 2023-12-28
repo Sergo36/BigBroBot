@@ -67,8 +67,8 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(OrderCallbackFactory.filter(F.action == "new_order"))
 async def order(callback: types.CallbackQuery, state: FSMContext):
-    text = "Выберете тип ноды\n"
-    query = NodeType.select(NodeType.id, NodeType.name)
+    text = "Выберете проект:\n"
+    query = NodeType.select(NodeType.id, NodeType.name).where(NodeType.description != "obsolete")
     keyboard = get_keyboard_for_node_type(query)
     await state.set_state(States.order)
     await callback.message.edit_text(

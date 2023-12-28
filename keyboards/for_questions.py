@@ -72,6 +72,8 @@ def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
 
 def get_keyboard_for_node_extended_information(node) -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
+    kb.button(text="История платежей", callback_data=NodesCallbackFactory(
+        action="payments_history", node_id=node.id))
     kb.button(text="Назад к выбранной ноде", callback_data=NodesCallbackFactory(
         action="select_node", node_id=node.id))
     kb.button(text="Назад к списку нод", callback_data=NodesCallbackFactory(
