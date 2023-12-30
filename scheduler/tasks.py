@@ -35,4 +35,4 @@ async def everyday_report(notifier: TelegramNotifier):
     for row in query:
         report_data.append(f"User: @{row.username}, Node: {row.node_type}, NodeId:{row.node_id}")
     report = report_header + '\n'.join(report_data)
-    notifier.emit("BigBroBot", report)
+    await notifier.emit("BigBroBot", report)
