@@ -13,6 +13,9 @@
     "data.models.interaction.Interaction",
     "data.models.node_interactions.NodeInteraction",
     "data.models.account.Account",
-    "data.models.node_payments.NodePayments"
+    "data.models.node_payments.NodePayments",
+    "data.models.server_configuration.ServerConfiguration",
+    "data.models.server.Server",
+    "data.models.hosting.Hosting"
   ]
 }

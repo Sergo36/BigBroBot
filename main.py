@@ -3,9 +3,12 @@ import logging
 import asyncio
 
 from aiogram import Bot, Dispatcher
+
+from data.models.node import Node
 from handlers import order, nodes
 from handlers.account import account
 from handlers.db_viewer import viewer
+from handlers.nodes import order_server
 from handlers.notification import notification
 from handlers.interaction import interaction
 from handlers.common import common
@@ -22,7 +25,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 async def main():
-
     bot = Bot(token=config.TOKEN)
     notifier_forward = NotifierForward(bot)
     dp = Dispatcher()
@@ -49,7 +51,7 @@ async def main():
                       kwargs={'bot': bot})
     scheduler.add_job(everyday_report, trigger='cron',
                       hour=21,
-                      minute=00,
+                      minute=0,
                       kwargs={'notifier': notifier_forward.telegram_notifier})
     scheduler.start()
 

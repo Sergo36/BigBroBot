@@ -16,7 +16,9 @@ from data.models.node import Node
 from data.models.node_data import NodeData
 from data.models.node_data_type import NodeDataType
 from data.models.node_payments import NodePayments
+from data.models.node_type import NodeType
 from data.models.payment_data import PaymentData
+from data.models.server_configuration import ServerConfiguration
 from data.models.transaction import Transaction
 from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
@@ -24,6 +26,7 @@ from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard
     get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
+from services.hostings.hetzner import create_server
 from services.transaction import check_hash, replenish_account
 
 router = Router()
@@ -44,8 +47,8 @@ async def select_node(
     paid_text = ("Не оплачено", "Оплачено")[paid]
 
     text = 'Информация о ноде:\n\n' \
-            f'Статус оплаты: {paid_text}\n' \
-            f'Оплачено до: {node.expiry_date.strftime("%d-%m-%Y")}'
+           f'Статус оплаты: {paid_text}\n' \
+           f'Оплачено до: {node.expiry_date.strftime("%d-%m-%Y")}'
 
     await callback.message.edit_text(
         text=text,
@@ -129,8 +132,7 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
         await message.answer(
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
-        if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
-            await notifier.emit(message.from_user.username, f"Оплата ноды {node.type.name}")
+        await after_pay_handler(node, message.from_user.username, notifier)
 
 
 @router.callback_query(
@@ -151,7 +153,8 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         data_text = data.data.replace('.', '\\.');
         text += f"\n*{data.name}*: {data_text}"
 
-    await callback.message.edit_text(text=text, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=get_keyboard_for_node_extended_information(node))
+    await callback.message.edit_text(text=text, parse_mode=ParseMode.MARKDOWN_V2,
+                                     reply_markup=get_keyboard_for_node_extended_information(node))
 
 
 @router.callback_query(
@@ -179,7 +182,8 @@ async def obsolete_node_yes(
     q.execute()
 
     await callback.message.edit_text(text=f"Заказ {callback_data.node_id} отменен")
-    await callback.message.answer(text="Выберите действие из списка ниже", reply_markup=get_keyboard_for_after_obsolete_node())
+    await callback.message.answer(text="Выберите действие из списка ниже",
+                                  reply_markup=get_keyboard_for_after_obsolete_node())
 
     await notifier.emit(callback.from_user.username, f"Отмена заказа {callback_data.node_id}")
 
@@ -203,8 +207,7 @@ async def select_account(
         await callback.message.answer(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
-        if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
-            await notifier.emit(callback.from_user.username, f"Оплата ноды {node.type.name}")
+        await after_pay_handler(node, callback.from_user.username, notifier)
     else:
         await callback.message.answer(
             text="На счете недостаточно средств",
@@ -276,3 +279,36 @@ async def payments_history(
 
     await state.update_data(db_table=res)
     await show_data(state, callback, back_step)
+
+
+async def after_pay_handler(node: Node, username: str, notifier: TelegramNotifier, ):
+    if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
+        await notifier.emit(username, f"Оплата ноды {node.type.name}")
+        server = await order_server(node, notifier)
+        if not (server is None):
+            server.save()
+            node.server = server.id
+            node.save()
+
+
+async def order_server(node: Node, notifier: TelegramNotifier):
+    sc: ServerConfiguration = (ServerConfiguration
+                               .select()
+                               .join(NodeType, on=(NodeType.server_configuration_id == ServerConfiguration.id))
+                               .where(NodeType.id == node.type)
+                               .get_or_none())
+    if sc is None:
+        await notifier.emit("BigBroBot", "Не задана конфигурация")
+        return
+
+    if not sc.auto_order:
+        await notifier.emit("BigBroBot", "Отключен автоматический заказ")
+        return
+
+    await notifier.emit("BigBroBot", f"Заказ сервера для ноды: {node.id}")
+    server = create_server(node, sc)
+
+    if server is None:
+        await notifier.emit("BigBroBot", f"Не удалось заказать сервер")
+
+    return server
