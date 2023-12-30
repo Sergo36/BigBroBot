@@ -3,9 +3,12 @@ import logging
 import asyncio
 
 from aiogram import Bot, Dispatcher
+
+from data.models.node import Node
 from handlers import order, nodes
 from handlers.account import account
 from handlers.db_viewer import viewer
+from handlers.nodes import order_server
 from handlers.notification import notification
 from handlers.interaction import interaction
 from handlers.common import common
@@ -14,7 +17,7 @@ from handlers.report import report_handler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from middleware.telegram_notifier_forward import NotifierForward
-from scheduler.tasks import send_payment_handlers
+from scheduler.tasks import send_payment_handlers, everyday_report
 from middleware.data_forward import DataForward
 
 # log
@@ -22,7 +25,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 async def main():
-
     bot = Bot(token=config.TOKEN)
     notifier_forward = NotifierForward(bot)
     dp = Dispatcher()
@@ -47,11 +49,13 @@ async def main():
                       hour=20,
                       minute=0,
                       kwargs={'bot': bot})
+    scheduler.add_job(everyday_report, trigger='cron',
+                      hour=21,
+                      minute=0,
+                      kwargs={'notifier': notifier_forward.telegram_notifier})
     scheduler.start()
 
-    await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -12,6 +12,7 @@ from botStates import DbViewReportState
 from callbacks.report_callback_factory import ReportCallbackFactory, UserReportCallbackFactory, DbViewCallbackFactory
 from data.models.node import Node
 from data.models.node_data import NodeData
+from data.models.node_data_type import NodeDataType
 from data.models.node_payments import NodePayments
 from data.models.node_type import NodeType
 from data.models.transaction import Transaction
@@ -227,3 +228,43 @@ async def user_report_transaction(
 
     await state.update_data(db_table=res)
     await show_data(state, callback)
+
+
+@router.callback_query(DbViewCallbackFactory.filter(F.table == "nodes_data"))
+async def nodes_data(
+    callback: types.CallbackQuery,
+    state: FSMContext
+):
+    await state.set_state(DbViewReportState.NodeSelectForNodeData)
+    await callback.message.answer(
+        text="Введите идентификационный номер ноды")
+    await callback.answer()
+
+
+@router.message(
+    DbViewReportState.NodeSelectForNodeData,
+    F.text.regexp('^[0-9]+$'))
+async def node_select_for_node_data(
+        message: Message,
+        state: FSMContext):
+    node = Node.get_or_none(Node.id == message.text)
+
+    if node is None:
+        await message.answer(
+            text="Нода не найдена\n"
+                 "Введите идентификационный номер ноды"
+        )
+    else:
+        node_data = (
+            NodeData.select(NodeData.name, NodeData.data)
+            .join(NodeDataType, on=(NodeData.type == NodeDataType.id))
+            .where(NodeData.node_id == node.id)
+            .where(NodeDataType.name == "Obligatory")
+            .namedtuples())
+        text = "Расширенная информация\n"
+        for data in node_data:
+            data_text = data.data.replace('.', '\\.');
+            text += f"\n*{data.name}*: {data_text}"
+
+        await message .answer(text=text, parse_mode=ParseMode.MARKDOWN_V2)
+
