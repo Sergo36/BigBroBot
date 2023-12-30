@@ -50,6 +50,9 @@ def get_db_view_keyboard():
     builder.button(
         text="Список пользователей",
         callback_data=DbViewCallbackFactory(table="users"))
+    builder.button(
+        text="Данные нод",
+        callback_data=DbViewCallbackFactory(table="nodes_data"))
     builder.adjust(1)
 
     return builder.as_markup()

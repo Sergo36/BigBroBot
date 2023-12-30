@@ -130,7 +130,7 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
         if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
-            await notifier.emit(message.from_user, f"Оплата ноды {node.type.name}")
+            await notifier.emit(message.from_user.username, f"Оплата ноды {node.type.name}")
 
 
 @router.callback_query(
@@ -181,7 +181,7 @@ async def obsolete_node_yes(
     await callback.message.edit_text(text=f"Заказ {callback_data.node_id} отменен")
     await callback.message.answer(text="Выберите действие из списка ниже", reply_markup=get_keyboard_for_after_obsolete_node())
 
-    await notifier.emit(callback.from_user, f"Отмена заказа {callback_data.node_id}")
+    await notifier.emit(callback.from_user.username, f"Отмена заказа {callback_data.node_id}")
 
 
 @router.callback_query(
@@ -204,7 +204,7 @@ async def select_account(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
         if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
-            await notifier.emit(callback.from_user, f"Оплата ноды {node.type.name}")
+            await notifier.emit(callback.from_user.username, f"Оплата ноды {node.type.name}")
     else:
         await callback.message.answer(
             text="На счете недостаточно средств",

@@ -1,8 +1,11 @@
+import aiogram.types
 from aiogram import Bot
 
+from bot_logging.telegram_notifier import TelegramNotifier
 from data.models.node import Node
 from data.models.node_type import NodeType
 from data.models.user import User
+from aiogram.types.user import User as UserAIOgram
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -18,3 +21,18 @@ async def send_payment_handlers(bot: Bot):
              .where(Node.obsolete == False)
              .namedtuples())
     await send_message(query, bot)
+
+
+async def everyday_report(notifier: TelegramNotifier):
+    query = (Node
+             .select(Node.id.alias("node_id"), User.telegram_name.alias("username"), NodeType.name.alias("node_type"))
+             .join(User, on=(User.id == Node.owner))
+             .join(NodeType, on=(NodeType.id == Node.type))
+             .where(Node.expiry_date >= datetime.now().date())
+             .namedtuples())
+    report_header = "Expiry date >= now\n"
+    report_data = []
+    for row in query:
+        report_data.append(f"User: @{row.username}, Node: {row.node_type}, NodeId:{row.node_id}")
+    report = report_header + '\n'.join(report_data)
+    notifier.emit("BigBroBot", report)

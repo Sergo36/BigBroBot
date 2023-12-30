@@ -50,7 +50,9 @@ async def confirm_order(
         obsolete=False
     )
 
-    await notifier.emit(callback.from_user, f"Заказ ноды {node_type.name}")
+    add_interaction(node)
+
+    await notifier.emit(callback.from_user.username, f"Заказ ноды {node_type.name}")
 
     await callback.answer(text="Заказ подтвержден", show_alert=True)
     keyboard = get_keyboard_for_order_confirm(node)
@@ -65,7 +67,7 @@ async def individual_order(
         state: FSMContext
 ):
     await state.set_state(States.identification_order)
-    await callback.message.edit_text("Напишите название проекта в котором вы хотите принять участие.\n"\
+    await callback.message.edit_text("Напишите название проекта в котором вы хотите принять участие.\n" \
                                      "Укажите любую ссылку на контактную информацию проекта (Web site/Docs/GitHub/Discord)")
 
 
@@ -80,5 +82,15 @@ async def transaction_handler(message: Message, state: FSMContext, bot: Bot):
     )
 
     await bot.send_message(chat_id=-915512097, text=f"Username: @{message.from_user.username}\n" \
-                                                   f"Telegram full name: {message.from_user.full_name}\n" \
-                                                   f"Message text: {message.text}")
+                                                    f"Telegram full name: {message.from_user.full_name}\n" \
+                                                    f"Message text: {message.text}")
+
+
+def add_interaction(node: Node):
+    if node.type.id == 8:
+        add_interaction_babylon(node)
+
+
+def add_interaction_babylon(node: Node):
+    NodeInteraction.create(node_id=node.id, node_interaction_id=2)
+    NodeInteraction.create(node_id=node.id, node_interaction_id=4)

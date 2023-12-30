@@ -14,7 +14,7 @@ from handlers.report import report_handler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from middleware.telegram_notifier_forward import NotifierForward
-from scheduler.tasks import send_payment_handlers
+from scheduler.tasks import send_payment_handlers, everyday_report
 from middleware.data_forward import DataForward
 
 # log
@@ -47,11 +47,13 @@ async def main():
                       hour=20,
                       minute=0,
                       kwargs={'bot': bot})
+    scheduler.add_job(everyday_report, trigger='cron',
+                      hour=21,
+                      minute=00,
+                      kwargs={'notifier': notifier_forward.telegram_notifier})
     scheduler.start()
 
-    await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
