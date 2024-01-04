@@ -92,5 +92,4 @@ def add_interaction(node: Node):
 
 
 def add_interaction_babylon(node: Node):
-    NodeInteraction.create(node_id=node.id, node_interaction_id=2)
     NodeInteraction.create(node_id=node.id, node_interaction_id=4)

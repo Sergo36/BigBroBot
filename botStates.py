@@ -8,6 +8,7 @@ class States(StatesGroup):
     notification = State()
     interaction = State()
     account = State()
+    install = State()
 
 
 class SubSpace(StatesGroup):
