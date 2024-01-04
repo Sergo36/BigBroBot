@@ -4,18 +4,16 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 
-from data.models.node import Node
 from handlers import order, nodes
 from handlers.account import account
 from handlers.db_viewer import viewer
-from handlers.nodes import order_server
 from handlers.notification import notification
 from handlers.interaction import interaction
 from handlers.common import common
 from handlers.report import report_handler
+from handlers.admin import admin_handlers
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 from middleware.telegram_notifier_forward import NotifierForward
 from scheduler.tasks import send_payment_handlers, everyday_report
 from middleware.data_forward import DataForward
@@ -41,8 +39,9 @@ async def main():
     dp.include_routers(account.router)
     dp.include_routers(interaction.router)
     dp.include_routers(report_handler.router)
-    dp.include_routers(common.router)
     dp.include_routers(viewer.router)
+    dp.include_routers(admin_handlers.router)
+    dp.include_routers(common.router)
 
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
     scheduler.add_job(send_payment_handlers, trigger='cron',

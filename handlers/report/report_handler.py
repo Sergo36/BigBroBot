@@ -248,6 +248,7 @@ async def node_select_for_node_data(
         message: Message,
         state: FSMContext):
     node = Node.get_or_none(Node.id == message.text)
+    await state.update_data(node=node)
 
     if node is None:
         await message.answer(
@@ -263,8 +264,10 @@ async def node_select_for_node_data(
             .namedtuples())
         text = "Расширенная информация\n"
         for data in node_data:
-            data_text = data.data.replace('.', '\\.');
+            data_text = data.data.replace('.', '\\.')
             text += f"\n*{data.name}*: {data_text}"
 
-        await message .answer(text=text, parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer(
+            text=text,
+            parse_mode=ParseMode.MARKDOWN_V2)
 

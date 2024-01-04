@@ -16,6 +16,8 @@
     "data.models.node_payments.NodePayments",
     "data.models.server_configuration.ServerConfiguration",
     "data.models.server.Server",
-    "data.models.hosting.Hosting"
+    "data.models.hosting.Hosting",
+    "data.models.install_configuration.InstallConfiguration",
+    "data.models.install_operation.InstallOperation"
   ]
 }

@@ -1,11 +1,10 @@
 import asyncio
 
-from aiogram import Router, types, Bot
+from aiogram import Router, types, Bot, F
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from magic_filter import F
 
 import config
 from botStates import States
@@ -48,6 +47,7 @@ async def order_type(
 )
 async def install_notification(callback: types.CallbackQuery):
     await callback.message.edit_text(text="Введите номер ноды")
+
 
 @router.message(
     States.notification,

@@ -1,7 +1,6 @@
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-from callbacks.report_callback_factory import ReportCallbackFactory, UserReportCallbackFactory, DbViewCallbackFactory
+from callbacks.report_callback_factory import ReportCallbackFactory, DbViewCallbackFactory
 
 
 def get_keyboard_payments_report(query):
