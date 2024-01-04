@@ -11,7 +11,7 @@ from handlers.notification.notification import send_message
 
 async def send_payment_handlers(bot: Bot):
     query = (User
-             .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name)
+             .select(User.telegram_id, Node.id, Node.payment_date, NodeType.name, Node.cost)
              .join(Node, on=(User.id == Node.owner))
              .join(NodeType, on=(Node.type == NodeType.id))
              .where(Node.expiry_date <= datetime.now() + relativedelta(days=+5))
