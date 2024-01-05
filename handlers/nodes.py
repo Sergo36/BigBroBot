@@ -283,7 +283,7 @@ async def payments_history(
 
 async def after_pay_handler(node: Node, username: str, notifier: TelegramNotifier, ):
     if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
-        await notifier.emit(username, f"Оплата ноды {node.type.name}")
+        await notifier.emit(username, f"Оплата ноды {node.type.name}({node.id}) ")
         server = await order_server(node, notifier)
         if not (server is None):
             server.save()

@@ -17,7 +17,7 @@ router = Router()
     F.from_user.id.in_({502691086, 250812500, 658498973}),
     Command(commands=["version"]))
 async def version(message: Message):
-    await message.answer("1.0.0")
+    await message.answer("1.0.1")
 
 
 @router.message(
@@ -25,11 +25,15 @@ async def version(message: Message):
     Command(commands=["changelog"]))
 async def changelog(message: Message):
     await message.answer(text="# Change Log\n"
+                              "## [1.0.1] - 2024-01-06\n"
+                              "### Changed\n"
+                              " - Order notification contains node ID\n"
+                              " - Show installation state\n"
                               "## [1.0.0] - 2024-01-04\n"
                               "### Added\n"
                               " - Babylon nodes order\n"
-                              " - Hetzner api servers order"
-                              " - Installation mechanism",
+                              " - Hetzner api servers order\n"
+                              " - Installation mechanism\n",
                          parse_mode=ParseMode.MARKDOWN)
 
 
@@ -64,4 +68,4 @@ async def node_select_for_node_data(
         message: Message):
     node = Node.get(Node.id == message.text)
     await message.answer(f"Устанавливаю ноду {node.id}")
-    await execute_installation(node)
+    await execute_installation(node, message)
