@@ -1,6 +1,8 @@
+import asyncio
 import os
 
 from aiogram import Router, F, types
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile, Message
 
@@ -142,6 +144,109 @@ async def set_validator_name(message: Message, state: FSMContext):
 async def set_validator_name_error(message: Message):
     await message.answer(
         text="Неверный формат имени допустимы только латинские буквы и цифры. Повторите попытку.",
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.callback_query(
+    States.interaction,
+    TaskCallbackFactory.filter(F.action == "create_validator_babylon"))
+async def create_validator_babylon(
+        callback: types.CallbackQuery,
+        state: FSMContext):
+    await state.set_state(InteractionState.create_validator_babylon)
+    await callback.message.edit_text(
+        text="Пришлите желаемое количество uBBN первоначального стейка",
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.message(
+    InteractionState.create_validator_babylon,
+    F.text.regexp('^[0-9]+$'))
+async def create_validator_babylon_implement(message: Message, state: FSMContext):
+    node = (await state.get_data()).get("node")
+
+    server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
+    if server_ip is None:
+        await message.answer("Не задан адрес сервера обратитесь в поддержку")
+
+    moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
+    if moniker is None:
+        await message.answer("Не задано имя валидатора обратитесь в поддержку")
+
+    script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/create_validator.sh'
+    args = [server_ip.name, message.text, moniker.name]
+    proc = await asyncio.create_subprocess_exec(
+        script_file_path,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    stdout, stderr = await proc.communicate()
+    if stdout:
+        await message.answer(
+            text=f"Транзакция создана `{stdout.decode()}`",
+            reply_markup=get_keyboard_default_interaction(),
+            parse_mode=ParseMode.MARKDOWN_V2)
+
+
+@router.message(
+    InteractionState.create_validator_babylon
+)
+async def create_validator_babylon_implement_error(message: Message):
+    await message.answer(
+        text="Неверный формат числа. Повторите попытку.",
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.callback_query(
+    States.interaction,
+    TaskCallbackFactory.filter(F.action == "add_stake_babylon"))
+async def add_stake_babylon(
+        callback: types.CallbackQuery,
+        state: FSMContext):
+
+    await state.set_state(InteractionState.add_stake_babylon)
+    await callback.message.edit_text(
+        text="Пришлите желаемое количество uBBN",
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.message(
+    InteractionState.add_stake_babylon,
+    F.text.regexp('^[0-9]+$'))
+async def add_stake_babylon_implement(message: Message, state: FSMContext):
+    node = (await state.get_data()).get("node")
+
+    server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
+    if server_ip is None:
+        await message.answer("Не задан адрес сервера обратитесь в поддержку")
+
+    moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
+    if moniker is None:
+        await message.answer("Не задано имя валидатора обратитесь в поддержку")
+
+    script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/add_stake.sh'
+    args = [server_ip.data, message.text]
+    proc = await asyncio.create_subprocess_exec(
+        script_file_path,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    stdout, stderr = await proc.communicate()
+    if stdout:
+        await message.answer(
+            text=f"Транзакция создана `{stdout.decode()}`",
+            reply_markup=get_keyboard_default_interaction(),
+            parse_mode=ParseMode.MARKDOWN_V2)
+
+
+@router.message(
+    InteractionState.add_stake_babylon
+)
+async def add_stake_babylon_implement_error(message: Message):
+    await message.answer(
+        text="Неверный формат числа. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
 
 
