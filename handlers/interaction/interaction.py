@@ -168,10 +168,12 @@ async def create_validator_babylon_implement(message: Message, state: FSMContext
     server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
     if server_ip is None:
         await message.answer("Не задан адрес сервера обратитесь в поддержку")
+        return
 
     moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
     if moniker is None:
         await message.answer("Не задано имя валидатора обратитесь в поддержку")
+        return
 
     script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/create_validator.sh'
     args = [server_ip.data, message.text, moniker.data]
@@ -220,10 +222,12 @@ async def add_stake_babylon_implement(message: Message, state: FSMContext):
     server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
     if server_ip is None:
         await message.answer("Не задан адрес сервера обратитесь в поддержку")
+        return
 
     moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
     if moniker is None:
         await message.answer("Не задано имя валидатора обратитесь в поддержку")
+        return
 
     script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/add_stake.sh'
     args = [server_ip.data, message.text]
