@@ -174,7 +174,7 @@ async def create_validator_babylon_implement(message: Message, state: FSMContext
         await message.answer("Не задано имя валидатора обратитесь в поддержку")
 
     script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/create_validator.sh'
-    args = [server_ip.name, message.text, moniker.name]
+    args = [server_ip.data, message.text, moniker.data]
     proc = await asyncio.create_subprocess_exec(
         script_file_path,
         *args,
