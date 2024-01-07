@@ -4,6 +4,7 @@ from aiogram.types import Message
 
 from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.order_callback_factory import OrderCallbackFactory
+from data.models.node_data import NodeData
 from data.models.node_interactions import NodeInteraction
 from data.models.node_type import NodeType
 from data.models.node import Node
@@ -50,9 +51,10 @@ async def confirm_order(
         obsolete=False
     )
 
+    add_information(node)
     add_interaction(node)
 
-    await notifier.emit(callback.from_user.username, f"Заказ ноды {node_type.name}")
+    await notifier.emit(callback.from_user.username, f"Заказ ноды {node_type.name} ({node.id})")
 
     await callback.answer(text="Заказ подтвержден", show_alert=True)
     keyboard = get_keyboard_for_order_confirm(node)
@@ -84,6 +86,15 @@ async def transaction_handler(message: Message, state: FSMContext, bot: Bot):
     await bot.send_message(chat_id=-915512097, text=f"Username: @{message.from_user.username}\n" \
                                                     f"Telegram full name: {message.from_user.full_name}\n" \
                                                     f"Message text: {message.text}")
+
+
+def add_information(node: Node):
+    if node.type.id == 8:
+        add_information_babylon(node)
+
+
+def add_information_babylon(node):
+    NodeData.create(node_id=node.id, name="Explorer", type=1, data="[babylonscan.io](https://babylonscan.io/validators)")
 
 
 def add_interaction(node: Node):
