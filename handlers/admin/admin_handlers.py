@@ -91,4 +91,6 @@ async def node_select_for_order(
     if server is None:
         await message.answer("Не удалось заказать сервер")
         return
+    node.server = server.id
+    node.save()
     await message.answer(f"Заказал сервер {server.id}")
