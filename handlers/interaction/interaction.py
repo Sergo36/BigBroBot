@@ -165,11 +165,13 @@ async def create_validator_babylon(
 async def create_validator_babylon_implement(message: Message, state: FSMContext):
     node = (await state.get_data()).get("node")
 
+    if node is None:
+        await message.answer("Не выбрана нода, перезапустите бота командой /start")
+        return
     server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
     if server_ip is None:
         await message.answer("Не задан адрес сервера обратитесь в поддержку")
         return
-
     moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
     if moniker is None:
         await message.answer("Не задано имя валидатора обратитесь в поддержку")
@@ -219,11 +221,13 @@ async def add_stake_babylon(
 async def add_stake_babylon_implement(message: Message, state: FSMContext):
     node = (await state.get_data()).get("node")
 
+    if node is None:
+        await message.answer("Не выбрана нода, перезапустите бота командой /start")
+        return
     server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
     if server_ip is None:
         await message.answer("Не задан адрес сервера обратитесь в поддержку")
         return
-
     moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
     if moniker is None:
         await message.answer("Не задано имя валидатора обратитесь в поддержку")
