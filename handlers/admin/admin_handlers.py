@@ -69,7 +69,7 @@ async def order(message: Message, state: FSMContext):
 
 
 @router.message(
-    States.install,
+    States.manual_order,
     F.from_user.id.in_({502691086, 250812500, 658498973}),
     F.text.regexp('^[0-9]+$'))
 async def node_select_for_order(
