@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 from aiogram import Router, F, types
@@ -179,6 +180,7 @@ async def create_validator_babylon_implement(message: Message, state: FSMContext
 
     script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/create_validator.sh'
     args = [server_ip.data, message.text, moniker.data]
+    logging.info(f"Create process {script_file_path} with args {server_ip.data} {message.text} {moniker.data}")
     proc = await asyncio.create_subprocess_exec(
         script_file_path,
         *args,
@@ -235,6 +237,7 @@ async def add_stake_babylon_implement(message: Message, state: FSMContext):
 
     script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/add_stake.sh'
     args = [server_ip.data, message.text]
+    logging.info(f"Create process {script_file_path} with args {server_ip.data} {message.text}")
     proc = await asyncio.create_subprocess_exec(
         script_file_path,
         *args,
