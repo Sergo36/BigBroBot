@@ -191,6 +191,9 @@ async def create_validator_babylon_implement(message: Message, state: FSMContext
     if stdout:
         await message.answer(
             text=f"Транзакция создана `{stdout.decode()}`",
+            parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer(
+            text=f"Выберете действие из списка ниже",
             reply_markup=get_keyboard_default_interaction(),
             parse_mode=ParseMode.MARKDOWN_V2)
 
@@ -248,6 +251,10 @@ async def add_stake_babylon_implement(message: Message, state: FSMContext):
     if stdout:
         await message.answer(
             text=f"Транзакция создана `{stdout.decode()}`",
+            parse_mode=ParseMode.MARKDOWN_V2)
+
+        await message.answer(
+            text=f"Выберете действие из списка ниже",
             reply_markup=get_keyboard_default_interaction(),
             parse_mode=ParseMode.MARKDOWN_V2)
 

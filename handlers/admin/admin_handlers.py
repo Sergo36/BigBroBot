@@ -8,7 +8,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from botStates import States
 from callbacks.installation_callback_factory import InstallationCallbackFactory
 from data.models.node import Node
+from data.models.node_type import NodeType
+from data.models.server_configuration import ServerConfiguration
 from handlers.install.install import execute_installation
+from services.hostings.hetzner import create_server
 
 router = Router()
 
@@ -37,25 +40,11 @@ async def changelog(message: Message):
                          parse_mode=ParseMode.MARKDOWN)
 
 
-@router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
-    Command(commands=["test"]))
-async def test(message: Message, state: FSMContext):
-    await state.set_state(States.install)
-    kb = InlineKeyboardBuilder()
-
-    test_button = InlineKeyboardButton(
-        text="Test",
-        callback_data=InstallationCallbackFactory(node="babylon", file_name="babylon_install.sh").pack())
-    kb.row(test_button)
-    buttons = kb.as_markup()
-    await message.answer(text="test", reply_markup=buttons)
-
 
 @router.message(
     F.from_user.id.in_({502691086, 250812500, 658498973}),
     Command(commands=["install"]))
-async def test(message: Message, state: FSMContext):
+async def install(message: Message, state: FSMContext):
     await state.set_state(States.install)
     await message.answer("Введите идентификационный номер ноды")
 
@@ -64,8 +53,42 @@ async def test(message: Message, state: FSMContext):
     States.install,
     F.from_user.id.in_({502691086, 250812500, 658498973}),
     F.text.regexp('^[0-9]+$'))
-async def node_select_for_node_data(
+async def node_select_for_install(
         message: Message):
     node = Node.get(Node.id == message.text)
     await message.answer(f"Устанавливаю ноду {node.id}")
     await execute_installation(node, message)
+
+
+@router.message(
+    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    Command(commands=["order"]))
+async def order(message: Message, state: FSMContext):
+    await state.set_state(States.manual_order)
+    await message.answer("Введите идентификационный номер ноды")
+
+
+@router.message(
+    States.install,
+    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.text.regexp('^[0-9]+$'))
+async def node_select_for_order(
+        message: Message):
+    node = Node.get(Node.id == message.text)
+
+    sc: ServerConfiguration = (ServerConfiguration
+                               .select()
+                               .join(NodeType, on=(NodeType.server_configuration_id == ServerConfiguration.id))
+                               .where(NodeType.id == node.type)
+                               .get_or_none())
+    if sc is None:
+        await message.answer("Не задана конфигурация")
+        return
+
+    await message.answer(f"Заказываю сервер для ноды {node.id}")
+    server = create_server(node, sc)
+
+    if server is None:
+        await message.answer("Не удалось заказать сервер")
+        return
+    await message.answer(f"Заказал сервер {server.id}")

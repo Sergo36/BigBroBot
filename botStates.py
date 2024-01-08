@@ -9,6 +9,7 @@ class States(StatesGroup):
     interaction = State()
     account = State()
     install = State()
+    manual_order = State()
 
 
 class SubSpace(StatesGroup):
