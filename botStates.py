@@ -8,8 +8,9 @@ class States(StatesGroup):
     notification = State()
     interaction = State()
     account = State()
-    install = State()
+    manual_install = State()
     manual_order = State()
+    manual_overview = State()
 
 
 class SubSpace(StatesGroup):

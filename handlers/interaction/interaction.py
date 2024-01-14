@@ -24,11 +24,15 @@ router = Router()
 async def interaction(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     node = data.get('node')
+    interaction_level = data.get('interaction_level')
+    if interaction_level is None:
+        interaction_level = 0
 
     interactions = (
         Interaction.select(Interaction.name, Interaction.callback)
         .join(NodeInteraction, on=(Interaction.id == NodeInteraction.node_interaction_id))
         .where(NodeInteraction.node_id == node.id)
+        .where(Interaction.interaction_level <= interaction_level)
         .namedtuples())
     keyboard = get_keyboard_for_interactions(interactions, node)
     await state.set_state(States.interaction)
@@ -266,6 +270,44 @@ async def add_stake_babylon_implement_error(message: Message):
     await message.answer(
         text="Неверный формат числа. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
+
+
+@router.callback_query(
+    States.interaction,
+    TaskCallbackFactory.filter(F.action == "run_get_data"))
+async def run_get_data(
+        callback: types.CallbackQuery,
+        callback_data: TaskCallbackFactory,
+        state: FSMContext):
+    node = (await state.get_data()).get("node")
+    if node is None:
+        await callback.message.answer("Не выбрана нода, перезапустите бота командой /start")
+        await callback.answer()
+        return
+    server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
+    if server_ip is None:
+        await callback.message.answer("Не задан адрес сервера обратитесь в поддержку")
+        await callback.answer()
+        return
+
+    script_file_path = config.INSTALL_SCRIPT_PATH + callback_data.data
+    args = [server_ip.data]
+    logging.info(f"Create process {script_file_path} with args {server_ip.data}")
+    proc = await asyncio.create_subprocess_exec(
+        script_file_path,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    stdout, stderr = await proc.communicate()
+    if stdout:
+        await callback.message.answer(
+            text=f"Результат`{stdout.decode()}`",
+            parse_mode=ParseMode.MARKDOWN_V2)
+        await callback.message.answer(
+            text=f"Выберете действие из списка ниже",
+            reply_markup=get_keyboard_default_interaction(),
+            parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @router.callback_query(
