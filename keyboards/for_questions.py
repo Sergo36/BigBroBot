@@ -115,10 +115,11 @@ def get_keyboard_for_after_obsolete_node():
 
 def get_keyboard_for_node_type(query):
     kb = InlineKeyboardBuilder()
-    for node_type in query:
+    for row in query:
+        text = f'{row.type_name}(∞)' if row.limit < 0 else f'{row.type_name}({row.limit - row.node_count})'
         kb.button(
-            text=node_type.name,
-            callback_data=OrderCallbackFactory(action="select_type", node_type_id=node_type.id))
+            text=text,
+            callback_data=OrderCallbackFactory(action="select_type", node_type_id=row.id))
     kb.adjust(2)
 
     individual = InlineKeyboardButton(
@@ -142,6 +143,14 @@ def get_keyboard_for_accept() -> ReplyKeyboardMarkup:
         text="Отмена",
         callback_data=OrderCallbackFactory(action="new_order"))
     kb.adjust(1, 1)
+    return kb.as_markup(resize_keyboard=True)
+
+
+def get_default_keyboard_for_order():
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Главное меню", callback_data=MainCallbackFactory(
+        action="main_menu"))
+    kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
 
