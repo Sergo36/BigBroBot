@@ -2,6 +2,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
+from peewee import fn
 
 from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
@@ -68,7 +69,12 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(OrderCallbackFactory.filter(F.action == "new_order"))
 async def order(callback: types.CallbackQuery, state: FSMContext):
     text = "Выберете проект:\n"
-    query = NodeType.select(NodeType.id, NodeType.name).where(NodeType.description != "obsolete")
+    query = (
+        NodeType.select(NodeType.id.alias('id'), NodeType.name.alias('type_name'), NodeType.limit.alias('limit'), fn.Count(Node.id).alias('node_count'))
+        .left_outer_join(Node, on=((NodeType.id == Node.type) & (Node.obsolete == False)))
+        .where(NodeType.obsolete == False)
+        .group_by(NodeType.id, NodeType.name))
+
     keyboard = get_keyboard_for_node_type(query)
     await state.set_state(States.order)
     await callback.message.edit_text(

@@ -10,7 +10,8 @@ from data.models.node_type import NodeType
 from data.models.node import Node
 from aiogram.fsm.context import FSMContext
 from botStates import States
-from keyboards.for_questions import get_keyboard_for_accept, get_keyboard_for_order_confirm
+from keyboards.for_questions import get_keyboard_for_accept, get_keyboard_for_order_confirm, \
+    get_default_keyboard_for_order
 
 router = Router()
 
@@ -24,6 +25,14 @@ async def order_type(
         state: FSMContext
 ):
     node_type = NodeType.get(NodeType.id == callback_data.node_type_id)
+    limit = node_type.limit
+    node_count = Node.select().where((Node.type == callback_data.node_type_id) & (Node.obsolete == False)).count()
+    if node_count >= limit:
+        await callback.message.edit_text(
+            text=f'Превышено максимальное число заказов',
+            reply_markup=get_default_keyboard_for_order())
+        return
+
     await state.update_data(node_type=node_type)
     keyboard = get_keyboard_for_accept()
     await callback.message.edit_text(text=f'Стоимость заказа: {node_type.cost.__str__()}', reply_markup=keyboard)
@@ -80,7 +89,7 @@ async def transaction_handler(message: Message, state: FSMContext, bot: Bot):
 
     await message.answer(
         text="Заказ принят мы свяжемся с вами для уточнения деталей",
-        reply_markup=get_keyboard_for_order_confirm()
+        reply_markup=get_default_keyboard_for_order()
     )
 
     await bot.send_message(chat_id=-915512097, text=f"Username: @{message.from_user.username}\n" \
