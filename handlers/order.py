@@ -26,12 +26,13 @@ async def order_type(
 ):
     node_type = NodeType.get(NodeType.id == callback_data.node_type_id)
     limit = node_type.limit
-    node_count = Node.select().where((Node.type == callback_data.node_type_id) & (Node.obsolete == False)).count()
-    if node_count >= limit:
-        await callback.message.edit_text(
-            text=f'Превышено максимальное число заказов',
-            reply_markup=get_default_keyboard_for_order())
-        return
+    if limit != -1:
+        node_count = Node.select().where((Node.type == callback_data.node_type_id) & (Node.obsolete == False)).count()
+        if node_count >= limit:
+            await callback.message.edit_text(
+                text=f'Превышено максимальное число заказов',
+                reply_markup=get_default_keyboard_for_order())
+            return
 
     await state.update_data(node_type=node_type)
     keyboard = get_keyboard_for_accept()
