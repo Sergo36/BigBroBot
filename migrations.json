@@ -8,7 +8,6 @@
     "data.models.node_type.NodeType",
     "data.models.transaction.Transaction",
     "data.models.node_data.NodeData",
-    "data.models.node_data_type.NodeDataType",
     "data.models.payment_data.PaymentData",
     "data.models.interaction.Interaction",
     "data.models.node_interactions.NodeInteraction",
@@ -18,6 +17,7 @@
     "data.models.server.Server",
     "data.models.hosting.Hosting",
     "data.models.install_configuration.InstallConfiguration",
-    "data.models.install_operation.InstallOperation"
+    "data.models.install_operation.InstallOperation",
+    "data.models.common_node_data.CommonNodeData"
   ]
 }

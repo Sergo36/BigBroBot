@@ -6,13 +6,11 @@ from aiogram import Router, F, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile, Message
-from peewee import fn, Field
 
 from botStates import DbViewReportState
-from callbacks.report_callback_factory import ReportCallbackFactory, UserReportCallbackFactory, DbViewCallbackFactory
+from callbacks.report_callback_factory import ReportCallbackFactory, DbViewCallbackFactory
 from data.models.node import Node
 from data.models.node_data import NodeData
-from data.models.node_data_type import NodeDataType
 from data.models.node_payments import NodePayments
 from data.models.node_type import NodeType
 from data.models.transaction import Transaction
@@ -22,7 +20,6 @@ from handlers.nodes import payment_state
 from handlers.report.report_keyboards import get_keyboard_payments_report, get_user_action_report_keyboard, \
     get_nodes_action_report_keyboard, get_db_view_keyboard
 from handlers.report.user_report_data import UserReportData, NodeReportData
-from services.mesage_formater import table_message
 
 router = Router()
 
@@ -258,9 +255,7 @@ async def node_select_for_node_data(
     else:
         node_data = (
             NodeData.select(NodeData.name, NodeData.data)
-            .join(NodeDataType, on=(NodeData.type == NodeDataType.id))
             .where(NodeData.node_id == node.id)
-            .where(NodeDataType.name == "Obligatory")
             .namedtuples())
         text = "Расширенная информация\n"
         for data in node_data:

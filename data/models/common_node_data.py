@@ -1,14 +1,14 @@
 from peewee import AutoField, TextField, ForeignKeyField
 
 from data.models.base_model import BaseModel
-from data.models.node import Node
+from data.models.node_type import NodeType
 
 
-class NodeData(BaseModel):
+class CommonNodeData(BaseModel):
     id = AutoField(column_name='id')
-    node_id = ForeignKeyField(column_name='node_id', model=Node)
     name = TextField(column_name='name')
+    type = ForeignKeyField(model=NodeType)
     data = TextField(column_name='data')
 
     class Meta:
-        table_name = 'node_data'
+        table_name = 'common_node_data'
