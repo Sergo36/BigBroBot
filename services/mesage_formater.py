@@ -4,6 +4,8 @@ import peewee
 
 
 def table_message(data: peewee.ModelNamedTupleCursorWrapper, start: int, end: int):
+    if data.count == 0:
+        return "Нет данных"
     body = []
     stop = min(len(data), end)
     for index in range(start, stop):

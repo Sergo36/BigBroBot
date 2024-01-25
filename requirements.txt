@@ -1,0 +1,9 @@
+aiogram==3.3.0
+apscheduler==3.10.4
+eth_utils==3.0.0
+hcloud==1.33.2
+magic_filter==1.0.12
+peewee==3.17.0
+python_dateutil==2.8.2
+web3==6.14.0
+peewee-migrations==0.3.32

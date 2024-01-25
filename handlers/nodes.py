@@ -12,14 +12,13 @@ from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.notification_callback_factory import NotificationCallbackFactory
 from data.models.account import Account
+from data.models.common_node_data import CommonNodeData
 from data.models.node import Node
 from data.models.node_data import NodeData
-from data.models.node_data_type import NodeDataType
 from data.models.node_payments import NodePayments
 from data.models.node_type import NodeType
 from data.models.payment_data import PaymentData
 from data.models.server_configuration import ServerConfiguration
-from data.models.transaction import Transaction
 from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
@@ -135,25 +134,28 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
         await after_pay_handler(node, message.from_user.username, notifier)
 
 
-@router.callback_query(
-    States.nodes,
-    NodesCallbackFactory.filter(F.action == "extended_information"))
+@router.callback_query(States.nodes,
+                       NodesCallbackFactory.filter(F.action == "extended_information"))
 async def information_node(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    node = data.get('node')
+    node: Node = data.get('node')
+
+    common_node_data = (
+        CommonNodeData.select(CommonNodeData.name, CommonNodeData.data)
+        .where(CommonNodeData.type == node.type)
+    )
 
     node_data = (
         NodeData.select(NodeData.name, NodeData.data)
-        .join(NodeDataType, on=(NodeData.type == NodeDataType.id))
         .where(NodeData.node_id == node.id)
-        .where(NodeDataType.name == "Obligatory")
         .namedtuples())
     text = "Расширенная информация\n"
+    for data in common_node_data:
+        text += f"\n*{data.name}*: {data.data}"
     for data in node_data:
-        data_text = data.data.replace('.', '\\.');
-        text += f"\n*{data.name}*: {data_text}"
+        text += f"\n*{data.name}*: {data.data}"
 
-    await callback.message.edit_text(text=text, parse_mode=ParseMode.MARKDOWN_V2,
+    await callback.message.edit_text(text=text.replace('.', '\\.'), parse_mode=ParseMode.MARKDOWN_V2,
                                      reply_markup=get_keyboard_for_node_extended_information(node))
 
 

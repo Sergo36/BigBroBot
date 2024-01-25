@@ -6,6 +6,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from services.mesage_formater import table_message
@@ -49,31 +50,45 @@ async def create_message(state: FSMContext, callback: types.CallbackQuery, back_
         return
 
     await callback.message.edit_text(
-        text=f"`{table_message(db_table, (current_page - 1) * data_count, current_page * data_count)}`", parse_mode=ParseMode.MARKDOWN_V2,
+        text=f"`{table_message(db_table, (current_page - 1) * data_count, current_page * data_count)}`",
+        parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=get_keyboard_for_table_message(current_page, last_page, back_step))
 
 
 def get_keyboard_for_table_message(current_page: int, last_page: int, back_step=None):
     builder = InlineKeyboardBuilder()
 
-    builder.button(
-        text="<--",
-        callback_data=TableMessageCallbackFactory(action='page_change', new_page=current_page - 1))
-    builder.button(
-        text=f'Page {current_page} / {last_page}',
-        callback_data=TableMessageCallbackFactory(action='null', new_page=current_page))
-    builder.button(
-        text="-->",
-        callback_data=TableMessageCallbackFactory(action='page_change', new_page=current_page + 1))
-    callback_data = TableMessageCallbackFactory(action="exit")
-    if back_step != None:
-        callback_data = back_step
-    builder.button(
-        text="Exit",
-        callback_data=callback_data)
+    if last_page > 1:
+        buttons = []
+        buttons.append(
+            InlineKeyboardButton(text="<--",
+                                 callback_data=TableMessageCallbackFactory(action='page_change',
+                                                                           new_page=current_page - 1).pack())
+            if current_page != 1
+            else InlineKeyboardButton(text="|",
+                                      callback_data=TableMessageCallbackFactory(action='null',
+                                                                                new_page=current_page).pack())
+        )
 
-    builder.adjust(3, 1)
+        buttons.append(
+            InlineKeyboardButton(text=f'{current_page} / {last_page}',
+                                 callback_data=TableMessageCallbackFactory(action='null',
+                                                                           new_page=current_page).pack())
+        )
+
+        buttons.append(
+            InlineKeyboardButton(text="-->",
+                                 callback_data=TableMessageCallbackFactory(action='page_change',
+                                                                           new_page=current_page + 1).pack())
+            if current_page != last_page
+            else InlineKeyboardButton(text="|",
+                                      callback_data=TableMessageCallbackFactory(action='null',
+                                                                                new_page=current_page).pack())
+        )
+        builder.row(*buttons)
+        callback_data = TableMessageCallbackFactory(action="exit")
+        if back_step is not None:
+            callback_data = back_step
+        builder.row(InlineKeyboardButton(text="Назад",
+                                         callback_data=callback_data.pack()))
     return builder.as_markup()
-
-
-
