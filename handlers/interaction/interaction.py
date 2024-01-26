@@ -11,6 +11,7 @@ import config
 from botStates import States, SubSpace, InteractionState
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.task_callback_factory import TaskCallbackFactory
+from data.models.common_node_interaction import CommonNodeInteraction
 from data.models.interaction import Interaction
 from data.models.node_data import NodeData
 from data.models.node_interactions import NodeInteraction
@@ -27,14 +28,21 @@ async def interaction(callback: types.CallbackQuery, state: FSMContext):
     interaction_level = data.get('interaction_level')
     if interaction_level is None:
         interaction_level = 0
+    q_common = (
+        Interaction.select(Interaction.name, Interaction.callback)
+        .join(CommonNodeInteraction, on=(Interaction.id == CommonNodeInteraction.node_interaction_id))
+        .where(CommonNodeInteraction.node_type == node.type)
+        .where(Interaction.interaction_level <= interaction_level)
+        .namedtuples()).execute()
 
-    interactions = (
+    q_node = (
         Interaction.select(Interaction.name, Interaction.callback)
         .join(NodeInteraction, on=(Interaction.id == NodeInteraction.node_interaction_id))
         .where(NodeInteraction.node_id == node.id)
         .where(Interaction.interaction_level <= interaction_level)
         .namedtuples())
-    keyboard = get_keyboard_for_interactions(interactions, node)
+
+    keyboard = get_keyboard_for_interactions(q_common, q_node, node)
     await state.set_state(States.interaction)
     await callback.message.edit_text(text="Выберете взаимодействие из списка ниже:", reply_markup=keyboard)
 

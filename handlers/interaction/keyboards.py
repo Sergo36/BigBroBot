@@ -5,9 +5,13 @@ from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 
 
-def get_keyboard_for_interactions(interactions, node):
+def get_keyboard_for_interactions(q_common, q_node, node):
     kb = InlineKeyboardBuilder()
-    for interaction in interactions:
+    for interaction in q_common:
+        kb.button(
+            text=interaction.name,
+            callback_data=interaction.callback)
+    for interaction in q_node:
         kb.button(
             text=interaction.name,
             callback_data=interaction.callback)

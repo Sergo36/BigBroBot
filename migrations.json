@@ -18,6 +18,7 @@
     "data.models.hosting.Hosting",
     "data.models.install_configuration.InstallConfiguration",
     "data.models.install_operation.InstallOperation",
-    "data.models.common_node_data.CommonNodeData"
+    "data.models.common_node_data.CommonNodeData",
+    "data.models.common_node_interaction.CommonNodeInteraction"
   ]
 }
