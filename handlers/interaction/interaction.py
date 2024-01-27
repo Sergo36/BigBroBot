@@ -168,7 +168,7 @@ async def create_validator_cosmos(
         callback_data: TaskCallbackFactory,
         state: FSMContext):
     await state.set_state(InteractionState.create_validator_cosmos)
-    await state.update_data(script_path=callback_data.action)
+    await state.update_data(script_path=callback_data.data)
     await callback.message.edit_text(
         text="Пришлите желаемое количество монет первоначального стейка",
         reply_markup=get_keyboard_default_interaction())
@@ -240,7 +240,7 @@ async def add_stake_cosmos(
         state: FSMContext):
 
     await state.set_state(InteractionState.add_stake_cosmos)
-    await state.update_data(script_path=callback_data.action)
+    await state.update_data(script_path=callback_data.data)
     await callback.message.edit_text(
         text="Пришлите желаемое количество монет",
         reply_markup=get_keyboard_default_interaction())
