@@ -20,8 +20,8 @@ class SubSpace(StatesGroup):
 class InteractionState(StatesGroup):
     wallet_set = State()
     validator_name_set = State()
-    add_stake_babylon = State()
-    create_validator_babylon = State()
+    add_stake_cosmos = State()
+    create_validator_cosmos = State()
 
 
 class DbViewReportState(StatesGroup):

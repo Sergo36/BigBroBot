@@ -162,35 +162,42 @@ async def set_validator_name_error(message: Message):
 
 @router.callback_query(
     States.interaction,
-    TaskCallbackFactory.filter(F.action == "create_validator_babylon"))
-async def create_validator_babylon(
+    TaskCallbackFactory.filter(F.action == "create_validator_cosmos"))
+async def create_validator_cosmos(
         callback: types.CallbackQuery,
+        callback_data: TaskCallbackFactory,
         state: FSMContext):
-    await state.set_state(InteractionState.create_validator_babylon)
+    await state.set_state(InteractionState.create_validator_cosmos)
+    await state.update_data(script_path=callback_data.action)
     await callback.message.edit_text(
-        text="Пришлите желаемое количество uBBN первоначального стейка",
+        text="Пришлите желаемое количество монет первоначального стейка",
         reply_markup=get_keyboard_default_interaction())
 
 
 @router.message(
-    InteractionState.create_validator_babylon,
+    InteractionState.create_validator_cosmos,
     F.text.regexp('^[0-9]+$'))
-async def create_validator_babylon_implement(message: Message, state: FSMContext):
-    node = (await state.get_data()).get("node")
+async def create_validator_cosmos_implement(message: Message, state: FSMContext):
+    data = await state.get_data()
+    node = data.get("node")
 
     if node is None:
         await message.answer("Не выбрана нода, перезапустите бота командой /start")
         return
+    script_path = data.get("script_path")
+    if script_path is None:
+        await message.answer("Не задана команда, обратитесь в поддержку")
+        return
     server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
     if server_ip is None:
-        await message.answer("Не задан адрес сервера обратитесь в поддержку")
+        await message.answer("Не задан адрес сервера, обратитесь в поддержку")
         return
     moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
     if moniker is None:
-        await message.answer("Не задано имя валидатора обратитесь в поддержку")
+        await message.answer("Не задано имя валидатора, обратитесь в поддержку")
         return
 
-    script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/create_validator.sh'
+    script_file_path = config.INSTALL_SCRIPT_PATH + script_path
     args = [server_ip.data, message.text, moniker.data]
     logging.info(f"Create process {script_file_path} with args {server_ip.data} {message.text} {moniker.data}")
     proc = await asyncio.create_subprocess_exec(
@@ -208,12 +215,17 @@ async def create_validator_babylon_implement(message: Message, state: FSMContext
             text=f"Выберете действие из списка ниже",
             reply_markup=get_keyboard_default_interaction(),
             parse_mode=ParseMode.MARKDOWN_V2)
+    else:
+        await message.answer(
+            text=f"Не удалось выполнить команду обратитесь в поддержку\n"
+                 f"Выберете действие из списка ниже",
+            parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @router.message(
-    InteractionState.create_validator_babylon
+    InteractionState.create_validator_cosmos
 )
-async def create_validator_babylon_implement_error(message: Message):
+async def create_validator_cosmos_implement_error(message: Message):
     await message.answer(
         text="Неверный формат числа. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
@@ -221,36 +233,43 @@ async def create_validator_babylon_implement_error(message: Message):
 
 @router.callback_query(
     States.interaction,
-    TaskCallbackFactory.filter(F.action == "add_stake_babylon"))
-async def add_stake_babylon(
+    TaskCallbackFactory.filter(F.action == "add_stake_cosmos"))
+async def add_stake_cosmos(
         callback: types.CallbackQuery,
+        callback_data: TaskCallbackFactory,
         state: FSMContext):
 
-    await state.set_state(InteractionState.add_stake_babylon)
+    await state.set_state(InteractionState.add_stake_cosmos)
+    await state.update_data(script_path=callback_data.action)
     await callback.message.edit_text(
-        text="Пришлите желаемое количество uBBN",
+        text="Пришлите желаемое количество монет",
         reply_markup=get_keyboard_default_interaction())
 
 
 @router.message(
-    InteractionState.add_stake_babylon,
+    InteractionState.add_stake_cosmos,
     F.text.regexp('^[0-9]+$'))
-async def add_stake_babylon_implement(message: Message, state: FSMContext):
-    node = (await state.get_data()).get("node")
+async def add_stake_cosmos_implement(message: Message, state: FSMContext):
+    data = await state.get_data()
 
+    node = data.get("node")
     if node is None:
         await message.answer("Не выбрана нода, перезапустите бота командой /start")
         return
+    script_path = data.get("script_path")
+    if script_path is None:
+        await message.answer("Не задана команда, обратитесь в поддержку")
+        return
     server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
     if server_ip is None:
-        await message.answer("Не задан адрес сервера обратитесь в поддержку")
+        await message.answer("Не задан адрес сервера, обратитесь в поддержку")
         return
     moniker = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Validator name")
     if moniker is None:
         await message.answer("Не задано имя валидатора обратитесь в поддержку")
         return
 
-    script_file_path = config.INSTALL_SCRIPT_PATH + 'babylon/add_stake.sh'
+    script_file_path = config.INSTALL_SCRIPT_PATH + script_path
     args = [server_ip.data, message.text]
     logging.info(f"Create process {script_file_path} with args {server_ip.data} {message.text}")
     proc = await asyncio.create_subprocess_exec(
@@ -269,12 +288,17 @@ async def add_stake_babylon_implement(message: Message, state: FSMContext):
             text=f"Выберете действие из списка ниже",
             reply_markup=get_keyboard_default_interaction(),
             parse_mode=ParseMode.MARKDOWN_V2)
+    else:
+        await message.answer(
+            text=f"Не удалось выполнить команду обратитесь в поддержку\n"
+                 f"Выберете действие из списка ниже",
+            parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @router.message(
-    InteractionState.add_stake_babylon
+    InteractionState.add_stake_cosmos
 )
-async def add_stake_babylon_implement_error(message: Message):
+async def add_stake_cosmos_implement_error(message: Message):
     await message.answer(
         text="Неверный формат числа. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
