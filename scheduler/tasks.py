@@ -28,7 +28,7 @@ async def everyday_report(notifier: TelegramNotifier):
              .select(Node.id.alias("node_id"), User.telegram_name.alias("username"), NodeType.name.alias("node_type"))
              .join(User, on=(User.id == Node.owner))
              .join(NodeType, on=(NodeType.id == Node.type))
-             .where(Node.expiry_date >= datetime.now().date())
+             .where((Node.obsolete == False) & (Node.expiry_date >= datetime.now().date()))
              .namedtuples())
     report_header = "Expiry date >= now\n"
     report_data = []

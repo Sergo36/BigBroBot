@@ -5,7 +5,7 @@ class TelegramNotifier:
         self.bot = bot
         self.chat_id = chat_id
 
-    async def emit(self, username : str, record: str):
+    async def emit(self, username: str, record: str):
         text = f"DateTime: {datetime.now().strftime('%d-%m-%Y %H:%M')}\n" \
                f"Username: @{username}\n" \
                f"Action: {record}"
