@@ -44,7 +44,7 @@ async def everyday_report(notifier: TelegramNotifier):
         row_text = f"User: @{row.username}, Node: {row.node_type}, NodeId:{row.node_id}"
         row_len = len(row_text)
         data_len = data_len + row_len
-        if data_len < 4900:
+        if data_len < 4000:
             report_data.append(f"User: @{row.username}, Node: {row.node_type}, NodeId:{row.node_id}")
         else:
             report = report_header + '\n'.join(report_data)
