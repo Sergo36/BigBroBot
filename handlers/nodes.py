@@ -155,7 +155,7 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
     for data in node_data:
         text += f"\n*{data.name}*: {data.data}"
 
-    await callback.message.edit_text(text=text.replace('.', '\\.'), parse_mode=ParseMode.MARKDOWN_V2,
+    await callback.message.edit_text(text=text.replace('.', '\\.').replace('-', '\\-'), parse_mode=ParseMode.MARKDOWN_V2,
                                      reply_markup=get_keyboard_for_node_extended_information(node))
 
 

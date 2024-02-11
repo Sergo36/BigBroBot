@@ -10,7 +10,7 @@ from aiogram.types import FSInputFile, Message
 import config
 from botStates import States, SubSpace, InteractionState
 from callbacks.nodes_callback_factory import NodesCallbackFactory
-from callbacks.task_callback_factory import TaskCallbackFactory
+from callbacks.task_callback_factory import TaskCallbackFactory, InteractionCallbackFactory
 from data.models.common_node_interaction import CommonNodeInteraction
 from data.models.interaction import Interaction
 from data.models.node_data import NodeData
@@ -119,6 +119,44 @@ async def set_wallet_address_error(message: Message):
         text="Неверный адрес кошелька. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
 
+
+@router.callback_query(
+    States.interaction,
+    TaskCallbackFactory.filter(F.action == "add_rpc"))
+async def add_rpc(
+        callback: types.CallbackQuery,
+        state: FSMContext):
+    await state.set_state(InteractionState.add_rpc)
+    await callback.message.edit_text(
+        text="Пришлите адрес RPC",
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.message(
+    InteractionState.add_rpc,
+    F.text.regexp('^(http|https):\/\/'))
+async def add_rpc_handler(message: Message, state: FSMContext):
+    node = (await state.get_data()).get("node")
+    NodeData.get_or_create(
+        data=message.text,
+        name="RPC",
+        node_id=node.id,
+        defaults={
+            'type': 1,
+        })
+
+    await message.answer(
+        text=f"RPC адрес установлен",
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.message(
+    InteractionState.add_rpc
+)
+async def add_rpc_error(message: Message):
+    await message.answer(
+        text="Неверный формат адреса. Повторите попытку.",
+        reply_markup=get_keyboard_default_interaction())
 
 @router.callback_query(
     States.interaction,

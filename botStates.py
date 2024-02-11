@@ -22,6 +22,7 @@ class InteractionState(StatesGroup):
     validator_name_set = State()
     add_stake_cosmos = State()
     create_validator_cosmos = State()
+    add_rpc = State()
 
 
 class DbViewReportState(StatesGroup):
