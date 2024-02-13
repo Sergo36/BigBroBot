@@ -8,8 +8,6 @@ class TaskCallbackFactory(CallbackData, prefix="task"):
     data: Optional[str] = None
 
 
-class InteractionCallbackFactory(CallbackData, prefix="interaction"):
+class NodeDataSetCallback(CallbackData, prefix="node_data_set"):
     action: str
-    name: Optional[str] = None
-    header: Optional[str] = None
-    conditions: Optional[str] = None
+    interaction_id: int

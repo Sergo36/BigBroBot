@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import re
 
 from aiogram import Router, F, types
 from aiogram.enums import ParseMode
@@ -10,7 +11,7 @@ from aiogram.types import FSInputFile, Message
 import config
 from botStates import States, SubSpace, InteractionState
 from callbacks.nodes_callback_factory import NodesCallbackFactory
-from callbacks.task_callback_factory import TaskCallbackFactory, InteractionCallbackFactory
+from callbacks.task_callback_factory import TaskCallbackFactory, NodeDataSetCallback
 from data.models.common_node_interaction import CommonNodeInteraction
 from data.models.interaction import Interaction
 from data.models.node_data import NodeData
@@ -401,3 +402,42 @@ async def get_file_interaction(
     file = FSInputFile(file_path)
     await callback.message.answer_document(file)
     await callback.answer()
+
+
+@router.callback_query(
+    States.interaction,
+    NodeDataSetCallback.filter(F.action == "common_handler"))
+async def common_node_data_set(
+        callback: types.CallbackQuery,
+        callback_data: NodeDataSetCallback,
+        state: FSMContext):
+    await state.set_state(InteractionState.common_handler)
+    interaction: Interaction = Interaction.get_by_id(callback_data.interaction_id)
+    await state.update_data(interaction_data=interaction.interaction_data)
+    await callback.message.edit_text(
+        text=interaction.interaction_data.split(':')[0],
+        reply_markup=get_keyboard_default_interaction())
+
+
+@router.message(
+    InteractionState.common_handler)
+async def set_validator_name(message: Message, state: FSMContext):
+    data = await state.get_data()
+    interaction_data: str = data.get('interaction_data')
+    if re.fullmatch(f'{interaction_data.split(":")[2]}', message.text) is not None:
+        node = data.get("node")
+        NodeData.get_or_create(
+            data=message.text,
+            name=interaction_data.split(':')[1],
+            node_id=node.id,
+            defaults={
+                'type': 1,
+            })
+
+        await message.answer(
+            text="Данные установлены",
+            reply_markup=get_keyboard_default_interaction())
+    else:
+        await message.answer(
+            text="Неверный формат. Повторите попытку.",
+            reply_markup=get_keyboard_default_interaction())

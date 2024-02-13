@@ -23,6 +23,7 @@ class InteractionState(StatesGroup):
     add_stake_cosmos = State()
     create_validator_cosmos = State()
     add_rpc = State()
+    common_handler = State()
 
 
 class DbViewReportState(StatesGroup):
