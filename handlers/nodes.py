@@ -31,6 +31,36 @@ from services.transaction import check_hash, replenish_account
 router = Router()
 router.callback_query.middleware(UsersMiddleware())
 
+SPECIAL_CHARS = [
+  '\\',
+  '_',
+  '*',
+  '[',
+  ']',
+  '(',
+  ')',
+  '~',
+  '`',
+  '>',
+  '<',
+  '&',
+  '#',
+  '+',
+  '-',
+  '=',
+  '|',
+  '{',
+  '}',
+  '.',
+  '!'
+]
+
+
+def escapeMarkdown(text: str):
+    for char in SPECIAL_CHARS:
+        text = text.replace(char, f'\\{char}')
+    return text
+
 
 @router.callback_query(
     NodesCallbackFactory.filter(F.action == "select_node"))
@@ -151,11 +181,11 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         .namedtuples())
     text = "Расширенная информация\n"
     for data in common_node_data:
-        text += f"\n*{data.name}*: {data.data}"
+        text += f"\n*{data.name}*: {escapeMarkdown(data.data)}"
     for data in node_data:
-        text += f"\n*{data.name}*: {data.data}"
+        text += f"\n*{data.name}*: {escapeMarkdown(data.data)}"
 
-    await callback.message.edit_text(text=text.replace('.', '\\.').replace('-', '\\-'), parse_mode=ParseMode.MARKDOWN_V2,
+    await callback.message.edit_text(text=text, parse_mode=ParseMode.MARKDOWN_V2,
                                      reply_markup=get_keyboard_for_node_extended_information(node))
 
 
