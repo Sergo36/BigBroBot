@@ -12,6 +12,7 @@ from handlers.interaction import interaction
 from handlers.common import common
 from handlers.report import report_handler
 from handlers.admin import admin_handlers
+from handlers.proxy import proxy_handlers
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from middleware.telegram_notifier_forward import NotifierForward
@@ -41,6 +42,7 @@ async def main():
     dp.include_routers(report_handler.router)
     dp.include_routers(viewer.router)
     dp.include_routers(admin_handlers.router)
+    dp.include_routers(proxy_handlers.router)
     dp.include_routers(common.router)
 
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")

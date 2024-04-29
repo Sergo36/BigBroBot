@@ -30,3 +30,7 @@ class DbViewReportState(StatesGroup):
     UserSelect = State()
     NodeSelect = State()
     NodeSelectForNodeData = State()
+
+
+class ProxyStates(StatesGroup):
+    ProxyCommand = State()

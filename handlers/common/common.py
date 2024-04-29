@@ -10,13 +10,13 @@ from callbacks.order_callback_factory import OrderCallbackFactory
 
 from data.models.node_type import NodeType
 from data.models.node import Node
-from handlers.common.keyboards import get_keyboard_for_report
+from handlers.common.keyboards import get_keyboard_for_report, get_keyboard_for_proxy_device_list
 
 from keyboards.for_questions import get_keyboard_for_node_type, \
     get_keyboard_for_nodes_list, get_keyboard_for_empty_nodes_list, get_keyboard_main_menu
 from middleware.user import UsersMiddleware
 
-from botStates import States
+from botStates import States, ProxyStates
 from magic_filter import F
 
 router = Router()
@@ -88,6 +88,16 @@ async def report(message: Message):
     await message.answer(
         text="Выберете тип отчета из списка ниже:",
         reply_markup=get_keyboard_for_report()
+    )
+
+
+@router.message(Command(commands=["proxy"]))
+@router.message(Command(commands=["прокси"]))
+async def cmd_proxy(message: Message, state: FSMContext):
+    await state.set_state(ProxyStates.ProxyCommand)
+    await message.answer(
+        text="Выберете тип устройства из списка ниже",
+        reply_markup=get_keyboard_for_proxy_device_list()
     )
 
 

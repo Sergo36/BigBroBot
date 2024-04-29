@@ -13,3 +13,7 @@ class UserReportCallbackFactory(CallbackData, prefix="user_report"):
 
 class DbViewCallbackFactory(CallbackData, prefix="db_view"):
     table: str
+
+
+class ProxyDeviceListCallbackFactory(CallbackData, prefix="proxy_device"):
+    device_type: str
