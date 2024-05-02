@@ -41,6 +41,16 @@ async def callback_start(
         reply_markup=get_keyboard_main_menu())
 
 
+@router.callback_query(MainCallbackFactory.filter(F.action == "new_main_menu"))
+async def callback_start(
+        callback: types.CallbackQuery
+):
+    await callback.message.answer(
+        text="Выберете раздел из списка ниже:",
+        reply_markup=get_keyboard_main_menu())
+    await callback.answer()
+
+
 @router.callback_query(NodesCallbackFactory.filter(F.action == "nodes_list"))
 async def nodes(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()

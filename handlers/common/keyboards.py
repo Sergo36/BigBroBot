@@ -1,6 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from callbacks.report_callback_factory import ReportCallbackFactory, ProxyDeviceListCallbackFactory
+from callbacks.report_callback_factory import ReportCallbackFactory, ProxyDeviceListCallbackFactory, \
+    ProxyNextActionCallbackFactory
 
 
 def get_keyboard_for_report():

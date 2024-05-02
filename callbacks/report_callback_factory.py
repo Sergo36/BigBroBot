@@ -17,3 +17,7 @@ class DbViewCallbackFactory(CallbackData, prefix="db_view"):
 
 class ProxyDeviceListCallbackFactory(CallbackData, prefix="proxy_device"):
     device_type: str
+
+
+class ProxyNextActionCallbackFactory(CallbackData, prefix = "next_action"):
+    action: str

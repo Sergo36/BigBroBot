@@ -34,3 +34,4 @@ class DbViewReportState(StatesGroup):
 
 class ProxyStates(StatesGroup):
     ProxyCommand = State()
+    IPhoneActions = State()
