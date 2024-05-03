@@ -36,3 +36,5 @@ class ProxyStates(StatesGroup):
     ProxyCommand = State()
     IPhoneActions = State()
     AndroidActions = State()
+    MacOsActions = State()
+    Windows = State()

@@ -11,13 +11,28 @@ from callbacks.main_callback_factory import MainCallbackFactory
 def get_keyboard_main_menu():
     builder = InlineKeyboardBuilder()
     builder.button(
+        text="🖥 Ноды", callback_data=MainCallbackFactory(action="nodes_menu")
+    ),
+    builder.button(
+        text="🌐 Прокси", callback_data=MainCallbackFactory(action="proxy_menu")
+    )
+    builder.adjust(2)
+    return builder.as_markup()
+
+
+def get_keyboard_for_nodes_menu():
+    builder = InlineKeyboardBuilder()
+    builder.button(
         text="\U0001F6D2 Новый заказ", callback_data=OrderCallbackFactory(action="new_order")
     )
     builder.button(
-        text="🗂Мои ноды", callback_data=NodesCallbackFactory(action="nodes_list")
+        text="🗂 Мои ноды", callback_data=NodesCallbackFactory(action="nodes_list")
     )
     builder.button(
         text="\U0001F4B0 Мой счет", callback_data=AccountCallbackFactory(action="accounts_list")
+    )
+    builder.button(
+        text="💬 Чат \"Ноды\"", url="https://t.me/+Fbg3iiAgx1ViNTZi"
     )
     builder.adjust(2)
     return builder.as_markup()

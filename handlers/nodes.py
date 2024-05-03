@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from botStates import States
 from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.account_callback_factory import AccountCallbackFactory
+from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.notification_callback_factory import NotificationCallbackFactory
 from data.models.account import Account
@@ -22,7 +23,8 @@ from data.models.server_configuration import ServerConfiguration
 from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
-    get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node
+    get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node, \
+    get_keyboard_for_nodes_menu
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
 from services.hostings.hetzner import create_server
@@ -60,6 +62,17 @@ def escapeMarkdown(text: str):
     for char in SPECIAL_CHARS:
         text = text.replace(char, f'\\{char}')
     return text
+
+
+@router.callback_query(
+    MainCallbackFactory.filter(F.action == "nodes_menu"))
+async def nodes_menu(
+        callback: types.CallbackQuery
+):
+    await callback.message.edit_text(
+        text="Выберете раздел из списка ниже:",
+        reply_markup=get_keyboard_for_nodes_menu())
+
 
 
 @router.callback_query(

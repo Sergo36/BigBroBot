@@ -1,12 +1,12 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from callbacks.main_callback_factory import MainCallbackFactory
-from callbacks.report_callback_factory import ProxyNextActionCallbackFactory
+from callbacks.report_callback_factory import ProxyNextActionCallbackFactory, ProxyDeviceListCallbackFactory
 
 
 def get_keyboard_for_complete_action():
     builder = InlineKeyboardBuilder()
-    builder.button(text="Ok", callback_data=ProxyNextActionCallbackFactory(action="next"))
+    builder.button(text="Далее", callback_data=ProxyNextActionCallbackFactory(action="next"))
     return builder.as_markup()
 
 

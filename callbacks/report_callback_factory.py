@@ -21,3 +21,4 @@ class ProxyDeviceListCallbackFactory(CallbackData, prefix="proxy_device"):
 
 class ProxyNextActionCallbackFactory(CallbackData, prefix = "next_action"):
     action: str
+    
