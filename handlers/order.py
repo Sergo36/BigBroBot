@@ -36,7 +36,7 @@ async def order_type(
 
     await state.update_data(node_type=node_type)
     keyboard = get_keyboard_for_accept()
-    await callback.message.edit_text(text=f'Стоимость заказа: {node_type.cost.__str__()}', reply_markup=keyboard)
+    await callback.message.edit_text(text=f'Стоимость заказа: {node_type.cost.__str__()} USDT', reply_markup=keyboard)
 
 
 @router.callback_query(
