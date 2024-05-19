@@ -3,9 +3,10 @@ from datetime import datetime
 from aiogram import Router, F, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 from dateutil.relativedelta import relativedelta
 
+import config
 from botStates import States
 from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.account_callback_factory import AccountCallbackFactory
@@ -149,14 +150,18 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     node = data.get('node')
 
+    photo = FSInputFile(config.FILE_BASE_PATH + f'qr_codes/{wallet_address}.png')
+    await callback.message.answer_photo(photo=photo)
+
     text = f"Для оплаты, переведите `{node.cost}` USDT в сети BEP20 на адрес `{wallet_address}`\n\n" \
            f"После подтверждения транзакции сетью, отправьте хеш транзакции ответным сообщением\n"
-    await callback.message.edit_text(
+    await callback.message.answer(
         text=text,
         parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=get_keyboard_for_node_extended_information(node),
     )
     await state.update_data(callback=callback)
+    await callback.answer()
 
 
 @router.message(
