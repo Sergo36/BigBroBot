@@ -159,6 +159,7 @@ async def add_rpc_error(message: Message):
         text="Неверный формат адреса. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
 
+
 @router.callback_query(
     States.interaction,
     TaskCallbackFactory.filter(F.action == "set_validator_name"))
@@ -197,6 +198,53 @@ async def set_validator_name_error(message: Message):
     await message.answer(
         text="Неверный формат имени допустимы только латинские буквы и цифры. Повторите попытку.",
         reply_markup=get_keyboard_default_interaction())
+
+
+@router.callback_query(
+    States.interaction,
+    TaskCallbackFactory.filter(F.action == "get_balance_cosmos"))
+async def get_balance_cosmos(
+        callback: types.CallbackQuery,
+        callback_data: TaskCallbackFactory,
+        state: FSMContext):
+    data = await state.get_data()
+    node = data.get("node")
+    await callback.answer()
+    if node is None:
+        await callback.message.answer("Не выбрана нода, перезапустите бота командой /start")
+        return
+    script_path = callback_data.data
+    if script_path is None:
+        await callback.message.answer("Не задана команда, обратитесь в поддержку")
+        return
+    server_ip = NodeData.get_or_none(NodeData.node_id == node.id, NodeData.name == "Server ip")
+    if server_ip is None:
+        await callback.message.answer("Не задан адрес сервера, обратитесь в поддержку")
+        return
+
+    script_file_path = config.INSTALL_SCRIPT_PATH + script_path
+    args = [server_ip.data]
+    logging.info(f"Create process {script_file_path} with args {server_ip.data}")
+    proc = await asyncio.create_subprocess_exec(
+        script_file_path,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    stdout, stderr = await proc.communicate()
+    if stdout:
+        await callback.message.answer(
+            text=f"Результат запроса\n{stdout.decode()}",
+            parse_mode=ParseMode.MARKDOWN_V2)
+        await callback.message.answer(
+            text=f"Выберете действие из списка ниже",
+            reply_markup=get_keyboard_default_interaction(),
+            parse_mode=ParseMode.MARKDOWN_V2)
+    else:
+        await callback.message.answer(
+            text=f"Не удалось выполнить команду обратитесь в поддержку\n"
+                 f"Выберете действие из списка ниже",
+            parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @router.callback_query(
