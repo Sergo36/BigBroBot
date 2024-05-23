@@ -7,6 +7,7 @@ from aiogram.types import Message, FSInputFile
 from dateutil.relativedelta import relativedelta
 
 import config
+import re
 from botStates import States
 from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.account_callback_factory import AccountCallbackFactory
@@ -198,10 +199,17 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         .where(NodeData.node_id == node.id)
         .namedtuples())
     text = "Расширенная информация\n"
-    for data in common_node_data:
-        text += f"\n*{data.name}*: {escapeMarkdown(data.data)}"
-    for data in node_data:
-        text += f"\n*{data.name}*: {escapeMarkdown(data.data)}"
+    for data in common_node_data + node_data:
+        match = re.search(r'\[\S*\]\(\S*\)', data.data)
+        if match:
+            link_name = re.search(r'\[\S*\]', data.data)
+            link_data = re.search(r'\(\S*\)', data.data)
+            value = (f"[{escapeMarkdown(data.data[link_name.regs[0][0] +1 :link_name.regs[0][1] -1])}]"
+                     f"({escapeMarkdown(data.data[link_data.regs[0][0] +1 :link_data.regs[0][1] -1])})")
+        else:
+            value = escapeMarkdown(data.data)
+
+        text += f"\n*{data.name}*: {value}"
 
     await callback.message.edit_text(text=text, parse_mode=ParseMode.MARKDOWN_V2,
                                      reply_markup=get_keyboard_for_node_extended_information(node))
