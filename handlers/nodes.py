@@ -177,6 +177,8 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
     if not (trn is None):
         await replenish_account(account, trn, message)
         await make_payment(account, node, message)
+        await message.answer("Ваша нода будет установлена в течение трех дней\n"
+                             "После установки Вам придет уведомление")
         await message.answer(
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
@@ -262,6 +264,8 @@ async def select_account(
 
     if account.funds >= node.cost:
         await make_payment(account, node, callback.message)
+        await callback.message.answer("Ваша нода будет установлена в течение трех дней\n"
+                                      "После установки Вам придет уведомление")
         await callback.message.answer(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
@@ -341,7 +345,7 @@ async def payments_history(
 
 async def after_pay_handler(node: Node, username: str, notifier: TelegramNotifier, ):
     if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
-        await notifier.emit(username, f"Оплата ноды {node.type.name}({node.id}) ")
+        await notifier.emit(username, f"Оплата ноды {node.type.name}({node.id})")
         server = await order_server(node, notifier)
         if not (server is None):
             server.save()
