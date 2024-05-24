@@ -207,7 +207,7 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
             value = (f"[{escapeMarkdown(data.data[link_name.regs[0][0] +1 :link_name.regs[0][1] -1])}]"
                      f"({escapeMarkdown(data.data[link_data.regs[0][0] +1 :link_data.regs[0][1] -1])})")
         else:
-            value = escapeMarkdown(data.data)
+            value = f"`{escapeMarkdown(data.data)}`"
 
         text += f"\n*{data.name}*: {value}"
 
