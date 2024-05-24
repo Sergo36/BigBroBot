@@ -15,7 +15,7 @@ def get_keyboard_for_interactions(q_common, q_node, node):
         kb.button(
             text=interaction.name,
             callback_data=interaction.callback)
-    kb.adjust(3)
+    kb.adjust(1)
 
     back_button = InlineKeyboardButton(
         text="Назад к выбранной ноде",
