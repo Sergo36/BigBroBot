@@ -177,12 +177,15 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
     if not (trn is None):
         await replenish_account(account, trn, message)
         await make_payment(account, node, message)
-        await message.answer("Ваша нода будет установлена в течение трех дней\n"
-                             "После установки Вам придет уведомление")
+
+        if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
+            await message.answer("Ваша нода будет установлена в течение трех дней\n"
+                                 "После установки Вам придет уведомление")
+            await after_first_pay_handler(node, message.from_user.username, notifier)
+
         await message.answer(
             text="Выберете действие из списка ниже:",
             reply_markup=get_keyboard_for_transaction_verify(back_step))
-        await after_pay_handler(node, message.from_user.username, notifier)
 
 
 @router.callback_query(States.nodes,
@@ -264,12 +267,15 @@ async def select_account(
 
     if account.funds >= node.cost:
         await make_payment(account, node, callback.message)
-        await callback.message.answer("Ваша нода будет установлена в течение трех дней\n"
-                                      "После установки Вам придет уведомление")
+        
+        if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
+            await callback.message.answer("Ваша нода будет установлена в течение трех дней\n"
+                                          "После установки Вам придет уведомление")
+            await after_first_pay_handler(node, callback.from_user.username, notifier)
+
         await callback.message.answer(
             text="Нода успешно оплачена",
             reply_markup=get_keyboard_for_account_node_payment(back_step))
-        await after_pay_handler(node, callback.from_user.username, notifier)
     else:
         await callback.message.answer(
             text="На счете недостаточно средств",
@@ -343,7 +349,7 @@ async def payments_history(
     await show_data(state, callback, back_step)
 
 
-async def after_pay_handler(node: Node, username: str, notifier: TelegramNotifier, ):
+async def after_first_pay_handler(node: Node, username: str, notifier: TelegramNotifier, ):
     if NodePayments.select().where(NodePayments.node_id == node.id).count() == 1:
         await notifier.emit(username, f"Оплата ноды {node.type.name}({node.id})")
         server = await order_server(node, notifier)
