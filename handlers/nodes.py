@@ -90,7 +90,8 @@ async def select_node(
     paid = node.expiry_date > datetime.now().date()
     paid_text = ("Не оплачено", "Оплачено")[paid]
 
-    text = 'Информация о ноде:\n\n' \
+    text = 'Информация о ноде:\n\n'\
+           f'Номер ноды: {node.id}\n'\
            f'Статус оплаты: {paid_text}\n' \
            f'Оплачено до: {node.expiry_date.strftime("%d-%m-%Y")}'
 
