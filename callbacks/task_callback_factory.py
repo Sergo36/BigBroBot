@@ -11,3 +11,12 @@ class TaskCallbackFactory(CallbackData, prefix="task"):
 class NodeDataSetCallback(CallbackData, prefix="node_data_set"):
     action: str
     interaction_id: int
+
+# class SetDataCallbackFactory(CallbackData, prefix="set_data"):
+#     filter: str
+#     name: str
+#     request: str
+#     response: str
+#     error: str
+
+

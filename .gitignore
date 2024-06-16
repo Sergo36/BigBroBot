@@ -131,4 +131,5 @@ dmypy.json
 
 #Local file
 /config.py
+/contabo_config.py
 .idea/

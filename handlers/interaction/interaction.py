@@ -83,6 +83,7 @@ async def add_wallet(
         text="Пришлите адрес кошелька",
         reply_markup=get_keyboard_default_interaction())
 
+
 @router.message(
     InteractionState.wallet_set,
     F.text.regexp('bbn[0-9a-zA-z]{39}') #bbn13rrkva7ejra0sfe9mava3lhuvr78qje5wezg7c
@@ -463,7 +464,7 @@ async def common_node_data_set(
     interaction: Interaction = Interaction.get_by_id(callback_data.interaction_id)
     await state.update_data(interaction_data=interaction.interaction_data)
     await callback.message.edit_text(
-        text=interaction.interaction_data.split(':')[0],
+        text=interaction.interaction_data.split(':')[2],
         reply_markup=get_keyboard_default_interaction())
 
 
@@ -472,7 +473,7 @@ async def common_node_data_set(
 async def set_validator_name(message: Message, state: FSMContext):
     data = await state.get_data()
     interaction_data: str = data.get('interaction_data')
-    if re.fullmatch(f'{interaction_data.split(":")[2]}', message.text) is not None:
+    if re.fullmatch(f'{interaction_data.split(":")[0]}', message.text) is not None:
         node = data.get("node")
         NodeData.get_or_create(
             data=message.text,
@@ -483,9 +484,9 @@ async def set_validator_name(message: Message, state: FSMContext):
             })
 
         await message.answer(
-            text="Данные установлены",
+            text=f'{interaction_data.split(":")[3]}',
             reply_markup=get_keyboard_default_interaction())
     else:
         await message.answer(
-            text="Неверный формат. Повторите попытку.",
+            text=f'{interaction_data.split(":")[4]}',
             reply_markup=get_keyboard_default_interaction())
