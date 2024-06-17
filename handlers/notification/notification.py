@@ -65,8 +65,8 @@ async  def send_notification(message: Message, bot: Bot):
             chat_id=node.owner.telegram_id,
             parse_mode=ParseMode.MARKDOWN_V2,
             text=f"Дорогой нодранер, Ваша нода ***{node.type.name}*** установлена\!\n"
-                 f"Вся необходимая информация связанная с нодой находится в разделе Расширенная информация\n"
-                 f"Ноды \-\> Мои ноды \-\> {node.type.name} \-\> Рассширенаня инфомрация")
+                 f"Вся необходимая информация, связанная с нодой, находится в разделе Расширенная информация\n"
+                 f"***Ноды \> Мои ноды \> {node.type.name} \> Рассширенная информация***")
 
 
 @router.callback_query(
