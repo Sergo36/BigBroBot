@@ -29,7 +29,8 @@ from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard
     get_keyboard_for_nodes_menu
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
-from services.hostings.hetzner import create_server
+from services.hostings.contabo import create_server as create_server_contabo
+from services.hostings.hetzner import create_server as create_server_hetzner
 from services.transaction import check_hash, replenish_account
 
 router = Router()
@@ -375,9 +376,21 @@ async def order_server(node: Node, notifier: TelegramNotifier):
         return
 
     await notifier.emit("BigBroBot", f"Заказ сервера для ноды: {node.id}")
-    server = create_server(node, sc)
 
+    server = await create_server(node, sc)
     if server is None:
+        await notifier.emit("BigBroBot", f"Не найден хостинг из конфигурации")
         await notifier.emit("BigBroBot", f"Не удалось заказать сервер")
 
+    return server
+
+
+async def create_server(node, sc):
+    # to do settable hosting id
+    if sc.hosting_id.name == 'Hetzner':
+        server = await create_server_hetzner(node, sc)
+    elif sc.hosting_id.name == 'Contabo':
+        server = await create_server_contabo(node, sc)
+    else:
+        return None
     return server

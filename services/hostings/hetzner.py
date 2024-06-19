@@ -35,7 +35,7 @@ def get_server_types():
         print(f'name:{server.data_model.name} id:{server.data_model.id}')
 
 
-def create_server(node: Node, server_configuration: ServerConfiguration) -> NodeServer:
+async def create_server(node: Node, server_configuration: ServerConfiguration) -> NodeServer:
     token = server_configuration.token
     client = Client(token=token)
 

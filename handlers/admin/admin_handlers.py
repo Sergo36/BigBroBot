@@ -10,7 +10,7 @@ from data.models.node_type import NodeType
 from data.models.server_configuration import ServerConfiguration
 from handlers.admin.keyboards import get_keyboard_for_node_overview
 from handlers.install.install import execute_installation
-from services.hostings.hetzner import create_server
+from handlers.nodes import create_server
 
 router = Router()
 
@@ -103,7 +103,7 @@ async def node_select_for_order(
         return
 
     await message.answer(f"Заказываю сервер для ноды {node.id}")
-    server = create_server(node, sc)
+    server = await create_server(node, sc)
 
     if server is None:
         await message.answer("Не удалось заказать сервер")

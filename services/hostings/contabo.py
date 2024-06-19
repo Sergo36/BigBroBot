@@ -1,10 +1,10 @@
 import aiohttp
-import asyncio
 import contabo_config
 import uuid
 
 from data.models.node import Node
 from data.models.server_configuration import ServerConfiguration
+from data.models.server import Server as NodeServer
 
 
 async def get_token_data():
@@ -22,14 +22,12 @@ async def get_token_data():
                 data=payload) as response:
 
             if response.status != 200:
-                # to do logging
                 return
-
             return await response.json()
 
 
 async def get_instances():
-    token_data = get_token_data()
+    token_data = await get_token_data()
     if token_data is None:
         return
 
@@ -42,16 +40,18 @@ async def get_instances():
                 'https://api.contabo.com/v1/compute/instances',
                 headers=headers) as response:
             if response.status != 200:
-                # to do logging
                 return
-
             return await response.json()
 
 
-async def create_instances(server_configuration: ServerConfiguration, node: Node):
-    token_data = get_token_data()
+async def create_server(node: Node, server_configuration: ServerConfiguration):
+    try:
+        token_data = await get_token_data()
+    except:
+        return None
+
     if token_data is None:
-        return
+        return None
 
     async with aiohttp.ClientSession() as session:
         headers = {
@@ -62,17 +62,28 @@ async def create_instances(server_configuration: ServerConfiguration, node: Node
             'imageId': f'{server_configuration.image}',
             'productId': f'{server_configuration.server_type}',
             'region': f'{server_configuration.location}',
-            'sshKeys': [int(server_configuration.ssh_key)], # as integer
+            'sshKeys': [int(server_configuration.ssh_key)],
             'period': 1,
-            'displayName': f'bb-{node.type}-{node.id}',
+            'displayName': f'bb-{str.lower(node.type.name)}-{node.id}',
             'defaultUser': 'root'
         }
-        async with session.post(
-                'https://api.contabo.com/v1/compute/instances',
-                headers=headers,
-                json=payload) as response:
-            if response.status != 201:
-                # to do logging
-                return
-
-            return await response.json()
+        try:
+            async with session.post(
+                    'https://api.contabo.com/v1/compute/instances',
+                    headers=headers,
+                    json=payload) as response:
+                if response.status == 201:
+                    response_json = await response.json()
+                    response_server_data = response_json['data'][0] if len(response_json['data']) else None
+                    if response_server_data is None:
+                        return None
+                    return NodeServer.create(
+                        hosting_id=server_configuration.hosting_id,
+                        server_configuration_id=server_configuration.id,
+                        hosting_server_id=response_server_data['instanceId'],
+                        obsolete=False
+                    )
+                else:
+                    return None
+        except:
+            return None
