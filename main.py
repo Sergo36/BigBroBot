@@ -20,7 +20,7 @@ from scheduler.tasks import send_payment_handlers, everyday_report
 from middleware.data_forward import DataForward
 
 # log
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 async def main():
