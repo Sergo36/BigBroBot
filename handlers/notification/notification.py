@@ -102,4 +102,4 @@ async def send_message(query: any, bot: Bot):
                 reply_markup=get_keyboard_for_payment_notification(row.id))
             await asyncio.sleep(5)
         except Exception as err:
-            print(f"Не удалось отправить уведомление {User.telegram_id}")
+            print(f"Не удалось отправить уведомление {row.telegram_id}")
