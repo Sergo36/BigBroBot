@@ -4,7 +4,7 @@ import uuid
 
 from data.models.node import Node
 from data.models.server_configuration import ServerConfiguration
-from data.models.server import Server as NodeServer
+from data.models.server import Server as NodeServer, Server
 
 
 async def get_token_data():
@@ -84,6 +84,83 @@ async def create_server(node: Node, server_configuration: ServerConfiguration):
                         hosting_status=response_server_data['status'],
                         obsolete=False
                     )
+                else:
+                    return None
+        except:
+            return None
+
+
+async def get_server_status(server: Server):
+    server_data = get_server_data(server);
+    if server_data is None:
+        return None
+    else:
+        try:
+            return server_data['status']
+        except:
+            return None
+
+
+async def get_server_data(server: Server):
+    return api_get(f'https://api.contabo.com/v1/compute/instances/{server.hosting_server_id}')
+
+
+async def api_get(url):
+    try:
+        token_data = await get_token_data()
+    except:
+        return None
+
+    if token_data is None:
+        return None
+
+    async with aiohttp.ClientSession() as session:
+        headers = {
+            'Authorization': f'Bearer {token_data["access_token"]}',
+            'x-request-id': f'{uuid.uuid4()}',
+        }
+        try:
+            async with session.get(
+                    url,
+                    headers=headers) as response:
+                if response.status == 200:
+                    response_json = await response.json()
+                    response_data = response_json['data'][0] if len(response_json['data']) else None
+                    if response_data is None:
+                        return None
+                    return response_data
+                else:
+                    return None
+        except:
+            return None
+
+
+async def api_post(url, body):
+    try:
+        token_data = await get_token_data()
+    except:
+        return None
+
+    if token_data is None:
+        return None
+
+    async with aiohttp.ClientSession() as session:
+        headers = {
+            'Authorization': f'Bearer {token_data["access_token"]}',
+            'x-request-id': f'{uuid.uuid4()}',
+        }
+        payload = body
+        try:
+            async with session.post(
+                    url,
+                    headers=headers,
+                    json=payload) as response:
+                if response.status == 201:
+                    response_json = await response.json()
+                    response_data = response_json['data'][0] if len(response_json['data']) else None
+                    if response_data is None:
+                        return None
+                    return response_data
                 else:
                     return None
         except:

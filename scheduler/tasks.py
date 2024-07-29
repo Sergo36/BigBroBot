@@ -6,12 +6,14 @@ from aiogram import Bot
 from bot_logging.telegram_notifier import TelegramNotifier
 from data.models.node import Node
 from data.models.node_type import NodeType
+from data.models.server import Server
 from data.models.user import User
 from aiogram.types.user import User as UserAIOgram
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from handlers.notification.notification import send_message
+from services.hostings.contabo import get_server_status
 
 
 async def send_payment_handlers(bot: Bot):
@@ -55,3 +57,17 @@ async def everyday_report(notifier: TelegramNotifier):
             data_len = data_len + row_len
     report = report_header + '\n'.join(report_data)
     await notifier.emit("BigBroBot", report)
+
+
+async def contabo_server_status_update(notifier: TelegramNotifier):
+
+    query = (Server
+             .select()
+             .where((Server.hosting_status != 'running') & (Server.hosting_id == 2)))
+    for server in query:
+        new_status = await get_server_status(server)
+        await notifier.emit("BigBroBot", f'For server with hosting id {server.hosting_server_id}\n'
+                                         f'old status: {server.hosting_status}'
+                                         f'new status: {new_status}')
+        server.hosting_status = new_status
+        server.save()
