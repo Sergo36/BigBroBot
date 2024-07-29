@@ -381,6 +381,8 @@ async def order_server(node: Node, notifier: TelegramNotifier):
     if server is None:
         await notifier.emit("BigBroBot", f"Не найден хостинг из конфигурации")
         await notifier.emit("BigBroBot", f"Не удалось заказать сервер")
+    else:
+        await notifier.emit("BigBroBot", f"Заказан сервер {server.hosting_server_id}. Статус поставки {server.hosting_status}")
 
     return server
 

@@ -81,6 +81,7 @@ async def create_server(node: Node, server_configuration: ServerConfiguration):
                         hosting_id=server_configuration.hosting_id,
                         server_configuration_id=server_configuration.id,
                         hosting_server_id=response_server_data['instanceId'],
+                        hosting_status=response_server_data['status'],
                         obsolete=False
                     )
                 else:

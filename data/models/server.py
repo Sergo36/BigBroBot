@@ -1,3 +1,5 @@
+import enum
+
 from peewee import AutoField, ForeignKeyField, TextField, BooleanField
 
 from data.models.base_model import BaseModel
@@ -10,7 +12,9 @@ class Server(BaseModel):
     hosting_id = ForeignKeyField(column_name='hosting_id', model=Hosting)
     server_configuration_id = ForeignKeyField(column_name='server_configuration_id', model=ServerConfiguration)
     hosting_server_id = TextField(column_name='hosting_server_id')
+    hosting_status = TextField(column_name='hosting_status')
     obsolete = BooleanField(column_name='obsolete')
 
     class Meta:
         table_name = 'servers'
+
