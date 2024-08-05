@@ -12,7 +12,8 @@ class Server(BaseModel):
     hosting_id = ForeignKeyField(column_name='hosting_id', model=Hosting)
     server_configuration_id = ForeignKeyField(column_name='server_configuration_id', model=ServerConfiguration)
     hosting_server_id = TextField(column_name='hosting_server_id')
-    hosting_status = TextField(column_name='hosting_status')
+    hosting_status = TextField(column_name='hosting_status', null=True)
+    install_status = TextField(column_name='install_status', null=True)
     obsolete = BooleanField(column_name='obsolete')
 
     class Meta:

@@ -16,7 +16,8 @@ from handlers.proxy import proxy_handlers
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from middleware.telegram_notifier_forward import NotifierForward
-from scheduler.tasks import send_payment_handlers, everyday_report
+from scheduler.tasks import send_payment_handlers, everyday_report, contabo_server_status_update, \
+    contabo_instances_update
 from middleware.data_forward import DataForward
 
 # log
@@ -26,6 +27,10 @@ logging.basicConfig(level=logging.DEBUG)
 async def main():
     bot = Bot(token=config.TOKEN)
     notifier_forward = NotifierForward(bot)
+
+    # await contabo_instances_update()
+    await  contabo_server_status_update(notifier_forward)
+    return
     dp = Dispatcher()
 
     dp.message.middleware(DataForward(bot))

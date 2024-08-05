@@ -7,13 +7,14 @@ from bot_logging.telegram_notifier import TelegramNotifier
 from data.models.node import Node
 from data.models.node_type import NodeType
 from data.models.server import Server
+from data.models.server_configuration import ServerConfiguration
 from data.models.user import User
 from aiogram.types.user import User as UserAIOgram
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from handlers.notification.notification import send_message
-from services.hostings.contabo import get_server_status
+from services.hostings.contabo import get_server_status, get_instances
 
 
 async def send_payment_handlers(bot: Bot):
@@ -63,11 +64,37 @@ async def contabo_server_status_update(notifier: TelegramNotifier):
 
     query = (Server
              .select()
-             .where((Server.hosting_status != 'running') & (Server.hosting_id == 2)))
+             .where(((Server.hosting_status != 'running') | (Server.hosting_status == None)) & (Server.hosting_id == 2)))
     for server in query:
         new_status = await get_server_status(server)
-        await notifier.emit("BigBroBot", f'For server with hosting id {server.hosting_server_id}\n'
-                                         f'old status: {server.hosting_status}'
-                                         f'new status: {new_status}')
+        print(new_status)
+        # await notifier.emit("BigBroBot", f'For server with hosting id {server.hosting_server_id}\n'
+        #                                  f'old status: {server.hosting_status}'
+        #                                  f'new status: {new_status}')
         server.hosting_status = new_status
         server.save()
+
+
+async def contabo_instances_update():
+    parameters = {
+        'size': '100'
+    }
+
+    configurations = {}
+    query = ServerConfiguration.select(ServerConfiguration.id, ServerConfiguration.server_type).namedtuples()
+    for id, type in query:
+        configurations[type] = id
+
+    async for instances in get_instances(parameters):
+        for instance in instances:
+            try:
+                server = Server.get(Server.hosting_server_id == instance['instanceId'])
+            except Server.DoesNotExist:
+                server = Server.create(
+                    hosting_id=2,
+                    # server_configuration_id=configurations[instance['productId']],
+                    server_configuration_id=2,
+                    hosting_server_id=instance['instanceId'],
+                    hosting_status=None,
+                    install_status=None,
+                    obsolete=False)

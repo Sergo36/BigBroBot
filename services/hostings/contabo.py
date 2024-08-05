@@ -19,6 +19,7 @@ async def get_token_data():
 
         async with session.post(
                 'https://auth.contabo.com/auth/realms/contabo/protocol/openid-connect/token',
+                proxy='http://127.0.0.1:1087',
                 data=payload) as response:
 
             if response.status != 200:
@@ -26,22 +27,19 @@ async def get_token_data():
             return await response.json()
 
 
-async def get_instances():
-    token_data = await get_token_data()
-    if token_data is None:
-        return
+async def get_instances(params: dict = None):
+    if params is None:
+        query_parameters = ""
+    else:
+        query_parameters = '?' + '&'.join(key + '=' + value for key, value in params.items())
 
-    async with aiohttp.ClientSession() as session:
-        headers = {
-            'Authorization': f'Bearer {token_data["access_token"]}',
-            'x-request-id': f'{uuid.uuid4()}',
-        }
-        async with session.get(
-                'https://api.contabo.com/v1/compute/instances',
-                headers=headers) as response:
-            if response.status != 200:
-                return
-            return await response.json()
+    request = '/v1/compute/instances' + query_parameters
+    while True:
+        response_json = await api_get(f'https://api.contabo.com{request}')
+        yield response_json['data']
+        if response_json['_links']['next'] == '':
+            break
+        request = response_json['_links']['next']
 
 
 async def create_server(node: Node, server_configuration: ServerConfiguration):
@@ -91,7 +89,7 @@ async def create_server(node: Node, server_configuration: ServerConfiguration):
 
 
 async def get_server_status(server: Server):
-    server_data = get_server_data(server);
+    server_data = await get_server_data(server)
     if server_data is None:
         return None
     else:
@@ -102,13 +100,18 @@ async def get_server_status(server: Server):
 
 
 async def get_server_data(server: Server):
-    return api_get(f'https://api.contabo.com/v1/compute/instances/{server.hosting_server_id}')
+    response_json = await api_get(f'https://api.contabo.com/v1/compute/instances/{server.hosting_server_id}')
+    response_data = response_json['data'][0] if len(response_json['data']) else None
+    if response_data is None:
+        return None
+    return response_data
 
 
 async def api_get(url):
     try:
         token_data = await get_token_data()
-    except:
+    except Exception as e:
+        print(e)
         return None
 
     if token_data is None:
@@ -122,13 +125,10 @@ async def api_get(url):
         try:
             async with session.get(
                     url,
+                    proxy='http://127.0.0.1:1087',
                     headers=headers) as response:
                 if response.status == 200:
-                    response_json = await response.json()
-                    response_data = response_json['data'][0] if len(response_json['data']) else None
-                    if response_data is None:
-                        return None
-                    return response_data
+                    return await response.json()
                 else:
                     return None
         except:
