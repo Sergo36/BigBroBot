@@ -1,15 +1,11 @@
-import logging
-
-import aiogram.types
 from aiogram import Bot
 
 from bot_logging.telegram_notifier import TelegramNotifier
 from data.models.node import Node
 from data.models.node_type import NodeType
 from data.models.user import User
-from aiogram.types.user import User as UserAIOgram
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from handlers.notification.notification import send_message
 
@@ -27,13 +23,19 @@ async def send_payment_handlers(bot: Bot):
 
 async def everyday_report(notifier: TelegramNotifier):
     query = (Node
-             .select(Node.id.alias("node_id"), User.telegram_name.alias("username"), NodeType.name.alias("node_type"))
+             .select(
+                Node.id.alias("node_id"),
+                Node.expiry_date.alias("node_expiry_date"),
+                User.telegram_name.alias("username"),
+                NodeType.name.alias("node_type"))
              .join(User, on=(User.id == Node.owner))
              .join(NodeType, on=(NodeType.id == Node.type))
-             .where((Node.obsolete == False) & (Node.expiry_date <= datetime.now().date()))
+             .where((Node.obsolete == False) & (Node.expiry_date <= datetime.now().date() + timedelta(days=3)))
              .namedtuples())
+    header = f'Expiry date <= {datetime.now().date() + timedelta(days=3)}\n\n' \
+             f'NodeId|User|Type|Expiry date\n'
     data_len = 0
-    row_text = "Expiry date >= now\n"
+    row_text = header
     row_len = len(row_text)
     data_len = data_len + row_len
 
@@ -41,16 +43,16 @@ async def everyday_report(notifier: TelegramNotifier):
 
     report_data = []
     for row in query:
-        row_text = f"User: @{row.username}, Node: {row.node_type}, NodeId:{row.node_id}"
+        row_text = f"{row.node_id}|@{row.username}|{row.node_type}|{row.node_expiry_date}"
         row_len = len(row_text)
         data_len = data_len + row_len
         if data_len < 4000:
-            report_data.append(f"User: @{row.username}, Node: {row.node_type}, NodeId:{row.node_id}")
+            report_data.append(row_text)
         else:
             report = report_header + '\n'.join(report_data)
             await notifier.emit("BigBroBot", report)
             data_len = 0
-            row_text = "Expiry date >= now\n"
+            row_text = header
             row_len = len(row_text)
             data_len = data_len + row_len
     report = report_header + '\n'.join(report_data)
