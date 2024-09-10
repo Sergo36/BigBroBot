@@ -11,6 +11,7 @@ class States(StatesGroup):
     manual_install = State()
     manual_order = State()
     manual_overview = State()
+    node_list = State()
 
 
 class SubSpace(StatesGroup):

@@ -5,6 +5,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile
 from dateutil.relativedelta import relativedelta
+from eth_utils.network import initialize_network_objects
 
 import config
 import re
@@ -22,6 +23,7 @@ from data.models.node_payments import NodePayments
 from data.models.node_type import NodeType
 from data.models.payment_data import PaymentData
 from data.models.server_configuration import ServerConfiguration
+from data.models.user import User
 from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
