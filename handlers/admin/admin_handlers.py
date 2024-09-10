@@ -8,6 +8,7 @@ from botStates import States
 from data.models.node import Node
 from data.models.node_type import NodeType
 from data.models.server_configuration import ServerConfiguration
+from data.models.user import User
 from handlers.admin.keyboards import get_keyboard_for_node_overview
 from handlers.install.install import execute_installation
 from handlers.nodes import create_server
@@ -38,7 +39,7 @@ async def version(message: Message):
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
     Command(commands=["changelog"]))
 async def changelog(message: Message):
     await message.answer(text="# Change Log\n"
@@ -59,7 +60,7 @@ async def changelog(message: Message):
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
     Command(commands=["install"]))
 async def install(message: Message, state: FSMContext):
     await state.set_state(States.manual_install)
@@ -72,7 +73,7 @@ async def callback_function(text: str, message: Message):
 
 @router.message(
     States.manual_install,
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
     F.text.regexp('^[0-9]+$'))
 async def node_select_for_install(
         message: Message):
@@ -81,7 +82,7 @@ async def node_select_for_install(
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
     Command(commands=["order"]))
 async def order(message: Message, state: FSMContext):
     await state.set_state(States.manual_order)
@@ -117,7 +118,7 @@ async def node_select_for_order(
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
     Command(commands=["overview"]))
 async def install(message: Message, state: FSMContext):
     await state.set_state(States.manual_overview)
@@ -139,3 +140,34 @@ async def node_select_for_overview(
     await message.answer(
         text="Выберете действие из списка ниже",
         reply_markup=get_keyboard_for_node_overview())
+
+
+@router.message(
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
+    Command(commands=["user"]))
+async def install(message: Message, state: FSMContext):
+    await state.set_state(States.node_list)
+    await message.answer("Введите юзернейм")
+
+
+@router.message(
+    States.node_list,
+    F.from_user.id.in_({502691086, 250812500, 658498973, 147769504}),
+    F.text.regexp('@\w+$'))
+async def show_user_nodes(
+        message: Message):
+    username = message.text[1:] if message.text[0] == '@' else message.text
+    query = (User
+            .select(Node.id.alias('node_id'), NodeType.name.alias('node_type_name'))
+            .join(Node, on=(User.id == Node.owner))
+            .join(NodeType, on=(Node.type == NodeType.id))
+            .where(User.telegram_name == username)
+            .namedtuples())
+    res = query.execute()
+
+    text = f'Ноды пользователя @{username}:\n'
+
+    for row in res:
+        text += f'{row.node_id} - {row.node_type_name} \n'
+
+    await message.answer(text)
