@@ -85,7 +85,7 @@ async def set_operation(node, file_path, args, message: Message):
     stdout, stderr = await proc.communicate()
     if stdout:
         logging.debug(f'[stdout]\n{stdout.decode()}')
-        await message.answer(f"Complete operation {file_path} for {node.id}")
+        await message.answer(f"Complete operation {file_path} for {node.id}\n{stdout.decode()}")
     if stderr:
         logging.debug(f'[stderr]\n{stderr.decode()}')
         await message.answer(f"Error operation {file_path} for {node.id}")
@@ -93,12 +93,12 @@ async def set_operation(node, file_path, args, message: Message):
 
 async def log_data_info(text: str, message: Message, callback_function):
     logging.info(text)
-    await log_data_callback(text, message, callback_function)
+    #await log_data_callback(text, message, callback_function)
 
 
 async def log_data_error(text: str, message: Message, callback_function):
     logging.error(text)
-    await log_data_callback(text, message, callback_function)
+    #await log_data_callback(text, message, callback_function)
 
 
 async def log_data_callback(text: str, message: Message, callback_function):
