@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 class TelegramNotifier:
     def __init__(self, bot, chat_id):
         self.bot = bot

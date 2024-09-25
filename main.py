@@ -14,10 +14,8 @@ from handlers.report import report_handler
 from handlers.admin import admin_handlers
 from handlers.proxy import proxy_handlers
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from middleware.telegram_notifier_forward import NotifierForward
-from scheduler.tasks import send_payment_handlers, everyday_report, contabo_server_status_update, \
-    contabo_instances_update
+from scheduler.scheduler_utils import scheduler_setup
 from middleware.data_forward import DataForward
 
 # log
@@ -29,8 +27,6 @@ async def main():
     notifier_forward = NotifierForward(bot)
 
     # await contabo_instances_update()
-    await  contabo_server_status_update(notifier_forward)
-    return
     dp = Dispatcher()
 
     dp.message.middleware(DataForward(bot))
@@ -50,16 +46,7 @@ async def main():
     dp.include_routers(proxy_handlers.router)
     dp.include_routers(common.router)
 
-    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    scheduler.add_job(send_payment_handlers, trigger='cron',
-                      hour=20,
-                      minute=0,
-                      kwargs={'bot': bot})
-    scheduler.add_job(everyday_report, trigger='cron',
-                      hour=21,
-                      minute=0,
-                      kwargs={'notifier': notifier_forward.telegram_notifier})
-    scheduler.start()
+    scheduler_setup(bot, notifier_forward)
 
     await dp.start_polling(bot)
 

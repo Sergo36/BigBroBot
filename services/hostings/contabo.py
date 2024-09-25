@@ -19,7 +19,6 @@ async def get_token_data():
 
         async with session.post(
                 'https://auth.contabo.com/auth/realms/contabo/protocol/openid-connect/token',
-                proxy='http://127.0.0.1:1087',
                 data=payload) as response:
 
             if response.status != 200:
@@ -101,6 +100,8 @@ async def get_server_status(server: Server):
 
 async def get_server_data(server: Server):
     response_json = await api_get(f'https://api.contabo.com/v1/compute/instances/{server.hosting_server_id}')
+    if response_json is None:
+        return None
     response_data = response_json['data'][0] if len(response_json['data']) else None
     if response_data is None:
         return None
@@ -125,7 +126,6 @@ async def api_get(url):
         try:
             async with session.get(
                     url,
-                    proxy='http://127.0.0.1:1087',
                     headers=headers) as response:
                 if response.status == 200:
                     return await response.json()

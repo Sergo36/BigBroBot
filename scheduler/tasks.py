@@ -1,4 +1,5 @@
 import logging
+from asyncio import sleep
 
 import aiogram.types
 from aiogram import Bot
@@ -63,14 +64,15 @@ async def everyday_report(notifier: TelegramNotifier):
 async def contabo_server_status_update(notifier: TelegramNotifier):
 
     query = (Server
-             .select()
+             .select(Server.hosting_server_id, Server.id, Server.hosting_status, Node.id).join(Node, on=Server.id == Node.server)
              .where(((Server.hosting_status != 'running') | (Server.hosting_status == None)) & (Server.hosting_id == 2)))
     for server in query:
         new_status = await get_server_status(server)
         print(new_status)
-        # await notifier.emit("BigBroBot", f'For server with hosting id {server.hosting_server_id}\n'
-        #                                  f'old status: {server.hosting_status}'
-        #                                  f'new status: {new_status}')
+        await notifier.emit("BigBroBot", f'For server with hosting id {server.hosting_server_id}\n'
+                                         f'Old status: {server.hosting_status}\n'
+                                         f'New status: {new_status}\n'
+                                         f'Node id: {server.node.id}')
         server.hosting_status = new_status
         server.save()
 
