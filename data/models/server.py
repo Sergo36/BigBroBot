@@ -1,10 +1,17 @@
-import enum
+from enum import Enum
 
 from peewee import AutoField, ForeignKeyField, TextField, BooleanField
+from peewee_enum_field import EnumField
 
 from data.models.base_model import BaseModel
 from data.models.hosting import Hosting
 from data.models.server_configuration import ServerConfiguration
+
+
+class InstallStatus(Enum):
+    WaitRun = 1
+    WaitDependencies = 2
+    Install = 3
 
 
 class Server(BaseModel):
@@ -18,4 +25,3 @@ class Server(BaseModel):
 
     class Meta:
         table_name = 'servers'
-

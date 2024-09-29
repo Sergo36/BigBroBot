@@ -4,7 +4,7 @@ import uuid
 
 from data.models.node import Node
 from data.models.server_configuration import ServerConfiguration
-from data.models.server import Server as NodeServer, Server
+from data.models.server import Server as NodeServer, Server, InstallStatus
 
 
 async def get_token_data():
@@ -79,6 +79,7 @@ async def create_server(node: Node, server_configuration: ServerConfiguration):
                         server_configuration_id=server_configuration.id,
                         hosting_server_id=response_server_data['instanceId'],
                         hosting_status=response_server_data['status'],
+                        install_status=InstallStatus.WaitRun.name,
                         obsolete=False
                     )
                 else:
@@ -94,6 +95,17 @@ async def get_server_status(server: Server):
     else:
         try:
             return server_data['status']
+        except:
+            return None
+
+
+async def get_server_ip(server: Server):
+    server_data = await get_server_data(server)
+    if server_data is None:
+        return None
+    else:
+        try:
+            return server_data['ipConfig']['v4']['ip']
         except:
             return None
 
