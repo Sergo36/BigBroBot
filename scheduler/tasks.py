@@ -102,32 +102,52 @@ async def install_for_status_wait_run(notifier: TelegramNotifier):
         server.save()
 
         await notifier.emit("BigBroBot", f'For server with hosting id {server.hosting_server_id}\n'
-                                         f'Write ip address: {ip}')
+                                         f'Set up ip address: {ip}')
 
 
-async def install_for_status_wait_run(notifier: TelegramNotifier):
+async def install_for_status_wait_dependencies(notifier: TelegramNotifier):
 
     query = (Node
               .select(Node.id)
               .join(Server, on=Server.id == Node.server)
               .where((Server.hosting_status == 'running') & (Server.install_status == InstallStatus.WaitDependencies.name)))
+
+    #to do check auto installing nedded
     for node in query:
-        argsList = (InstallOperation
+        args_collection = (InstallOperation
                     .select(InstallOperation.args)
                     .join(NodeType, on=NodeType.install_configuration == InstallOperation.install_configuration)
                     .join(Node, on=Node.type == NodeType.id)
                     .where(Node.id == node.id))
-        unicArgs = list(set(';'.join(argsList).split(';')))
+        all_args = []
+        for args in args_collection:
+            all_args.append(args.args)
 
-        test = (NodeData
+        unic_args_list = list(set(';'.join(all_args).split(';')))
+
+        avaliable_args_count = (NodeData
                 .select()
-                .count()
-                .where(NodeData.node_id == node.id) & (NodeData.name.in_(unicArgs)))
+                .where((NodeData.node_id == node.id) & (NodeData.name.in_(unic_args_list)))
+                .count())
 
-        #for args in argsList:
+        if (len(unic_args_list) != avaliable_args_count):
+            avaliable_args = (NodeData
+                                    .select(NodeData.name)
+                                    .where((NodeData.node_id == node.id) & (NodeData.name.in_(unic_args_list))))
+            avaliable_args_list = []
+            for arg in avaliable_args:
+                avaliable_args_list.append(arg)
 
+            # text = f'Installation error\n'\
+            #        f'For node with id {node.id}\n'\
+            #        f'Install args: {";".join(unic_args_list)} \n'\
+            #        f'Avaliable args: {";".join(avaliable_args_list)}'
+            # print(text)
 
-
-
+            await notifier.emit("BigBroBot", f'Installation error\n'
+                                             f'For node with id {node.id}\n'
+                                             f'Install args: {";".join(unic_args_list)} \n'
+                                             f'Avaliable args {";".join(avaliable_args_list)}')
+            return
 
 
