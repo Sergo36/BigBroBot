@@ -19,7 +19,7 @@ from scheduler.scheduler_utils import scheduler_setup
 from middleware.data_forward import DataForward
 
 # log
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 async def main():

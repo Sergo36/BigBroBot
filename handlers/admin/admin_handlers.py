@@ -66,8 +66,8 @@ async def install(message: Message, state: FSMContext):
     await message.answer("Введите идентификационный номер ноды")
 
 
-async def callback_function(text: str, message: Message):
-    await message.answer(text)
+# async def callback_function(text: str, message: Message):
+#     await message.answer(text)
 
 
 @router.message(
@@ -77,7 +77,7 @@ async def callback_function(text: str, message: Message):
 async def node_select_for_install(
         message: Message):
     node = Node.get(Node.id == message.text)
-    await execute_installation(node, message, callback_function)
+    await execute_installation(node, message)
 
 
 @router.message(
