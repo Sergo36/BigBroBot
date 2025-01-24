@@ -9,11 +9,16 @@ from data.models.install_operation import InstallOperation
 from data.models.node import Node
 from data.models.node_data import NodeData
 from data.models.node_type import NodeType
+from data.models.server import Server, InstallStatus
 
 
 async def execute_installation(node: Node, message: Message):
+    server_model = Server.get_by_id(node.server)
+    server_model.install_status = InstallStatus.RunningInstall.name
+    server_model.save()
+
     strings_message = [f"Execute installation for node {node.id}"]
-    log_message = await message.answer(text='\n'.join(strings_message),reply_markup=None)
+    log_message = await message.answer(text='\n'.join(strings_message), reply_markup=None)
 
     node_type: NodeType = NodeType.get(NodeType.id == node.type)
     query = (InstallOperation
@@ -45,6 +50,9 @@ async def execute_installation(node: Node, message: Message):
             return
 
     await log_data_info(f"Complete execute installation for node {node.id}", log_message, strings_message)
+
+    server_model.install_status = InstallStatus.Install.name
+    server_model.save()
 
 
 async def get_operation(node, file_path, args, log_message: Message, strings_message: []):

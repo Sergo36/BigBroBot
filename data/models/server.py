@@ -11,7 +11,8 @@ from data.models.server_configuration import ServerConfiguration
 class InstallStatus(Enum):
     WaitRun = 1
     WaitDependencies = 2
-    Install = 3
+    RunningInstall = 3
+    Install = 4
 
 
 class Server(BaseModel):

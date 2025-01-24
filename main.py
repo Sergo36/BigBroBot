@@ -4,6 +4,7 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 
+from bot_logging.telegram_notifier import ConsoleNotifier
 from handlers import order, nodes
 from handlers.account import account
 from handlers.db_viewer import viewer
@@ -17,6 +18,7 @@ from handlers.proxy import proxy_handlers
 from middleware.telegram_notifier_forward import NotifierForward
 from scheduler.scheduler_utils import scheduler_setup
 from middleware.data_forward import DataForward
+from scheduler.tasks import install_for_status_wait_dependencies, install_for_status_wait_run
 
 # log
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +27,11 @@ logging.basicConfig(level=logging.INFO)
 async def main():
     bot = Bot(token=config.TOKEN)
     notifier_forward = NotifierForward(bot)
+    console_notifier = ConsoleNotifier()
 
-    # await contabo_instances_update()
+    #await install_for_status_wait_dependencies(console_notifier)
+    await install_for_status_wait_run(console_notifier)
+    return
     dp = Dispatcher()
 
     dp.message.middleware(DataForward(bot))
