@@ -13,19 +13,22 @@ from handlers.common import common
 from handlers.report import report_handler
 from handlers.admin import admin_handlers
 from handlers.proxy import proxy_handlers
+from handlers.payment import payment
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from middleware.telegram_notifier_forward import NotifierForward
-from scheduler.tasks import send_payment_handlers, everyday_report
+from scheduler.tasks import send_payment_handlers, everyday_report, get_tokens_prices
 from middleware.data_forward import DataForward
 
 # log
 logging.basicConfig(level=logging.INFO)
 
-
 async def main():
+
     bot = Bot(token=config.TOKEN)
     notifier_forward = NotifierForward(bot)
+    # await get_tokens_prices(notifier_forward.telegram_notifier)
+    # return
     dp = Dispatcher()
 
     dp.message.middleware(DataForward(bot))
@@ -37,6 +40,7 @@ async def main():
     dp.include_routers(notification.router)
     dp.include_routers(nodes.router)
     dp.include_routers(order.router)
+    dp.include_routers(payment.router)
     dp.include_routers(account.router)
     dp.include_routers(interaction.router)
     dp.include_routers(report_handler.router)
@@ -53,6 +57,9 @@ async def main():
     scheduler.add_job(everyday_report, trigger='cron',
                       hour=21,
                       minute=0,
+                      kwargs={'notifier': notifier_forward.telegram_notifier})
+    scheduler.add_job(get_tokens_prices, trigger='interval',
+                      minutes=1,
                       kwargs={'notifier': notifier_forward.telegram_notifier})
     scheduler.start()
 

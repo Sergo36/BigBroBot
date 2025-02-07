@@ -21,11 +21,12 @@ class Transaction(BaseModel):
     account_id = ForeignKeyField(column_name='account_id', model=Account)
     value = TransactionValue(column_name='value')
     decimals = IntegerField(column_name='decimals')
+    contract_address = TextField(column_name='contract_address')
 
     class Meta:
         table_name = 'transactions'
 
-    def initialisation_transaction(self, transaction_hash, decimals, txn):
+    def initialisation_transaction(self, transaction_hash, decimals, contract_address, txn):
         self.transaction_hash = transaction_hash
         self.block_hash = txn['blockHash'].hex()
         self.block_number = txn['blockNumber']
@@ -33,6 +34,7 @@ class Transaction(BaseModel):
         self.transaction_to = txn.logs[0].topics[2].hex()
         self.status = bool(txn['status'])
         self.decimals = decimals
+        self.contract_address = contract_address
         self.owner = 0
         self.value = txn.logs[0].data.hex()
         self.node_id = 0

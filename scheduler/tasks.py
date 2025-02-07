@@ -1,8 +1,12 @@
+import requests
+import config
 from aiogram import Bot
 
 from bot_logging.telegram_notifier import TelegramNotifier
 from data.models.node import Node
 from data.models.node_type import NodeType
+from data.models.payment_token import PaymentToken
+from data.models.token_price import TokenPrice
 from data.models.user import User
 
 from datetime import datetime, timedelta
@@ -57,3 +61,33 @@ async def everyday_report(notifier: TelegramNotifier):
             data_len = data_len + row_len
     report = report_header + '\n'.join(report_data)
     await notifier.emit("BigBroBot", report)
+
+
+async def get_tokens_prices(notifier: TelegramNotifier):
+    tokens = (TokenPrice.select(TokenPrice.token_id, TokenPrice.payment_token_id)
+              .join(PaymentToken, on=(TokenPrice.payment_token_id == PaymentToken.id))
+              .where(PaymentToken.obsolete == False)
+              .namedtuples())
+
+    token_ids = ",".join(item.token_id for item in tokens)
+    vs_currency = "usd"
+    url = config.PRICE
+    params = {
+        "ids": token_ids,
+        "vs_currencies": vs_currency
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        for token in tokens:
+            if token.token_id in data:
+                price = data[token.token_id][vs_currency]
+                query = PaymentToken.update(token_price=price).where(PaymentToken.id == token.payment_token_id)
+                query.execute()
+            else:
+                notifier.emit("BigBroBot", f"Информация о токене '{token.token_id}' не найдена.")
+    except requests.exceptions.RequestException as e:
+        notifier.emit("BigBroBot", f"Ошибка при получении данных: {e}")

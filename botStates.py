@@ -38,3 +38,8 @@ class ProxyStates(StatesGroup):
     AndroidActions = State()
     MacOsActions = State()
     Windows = State()
+
+
+class PaymentStates(StatesGroup):
+    ChainSelect = State()
+

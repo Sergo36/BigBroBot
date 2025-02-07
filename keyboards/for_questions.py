@@ -6,6 +6,7 @@ from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.order_callback_factory import OrderCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
+from callbacks.token_select_callback_factory import TokenSelectCallbackFactory
 
 
 def get_keyboard_main_menu():
@@ -81,7 +82,17 @@ def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:
         action="confirm_obsolete"))
     kb.button(text="Назад к списку нод", callback_data=NodesCallbackFactory(
         action="nodes_list"))
-    kb.adjust(2, 2, 1)
+    kb.adjust(1, 1, 2, 1)
+    return kb.as_markup(resize_keyboard=True)
+
+
+def get_keyboard_for_select_token(tokens) -> ReplyKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for token in tokens:
+        kb.button(
+            text=f"{token.token_name} ({token.chain_name})",
+            callback_data=TokenSelectCallbackFactory(action="select_token", token_id=token.id))
+    kb.adjust(2)
     return kb.as_markup(resize_keyboard=True)
 
 

@@ -16,14 +16,16 @@ from services.web3 import get_transaction, transaction_valid, get_block_date
 from eth_utils.units import units
 
 
-async def check_hash(message: Message, state: FSMContext, back_step: CallbackData):
+async def check_hash(message: Message, trn_data, back_step: CallbackData):
     transaction_hash = message.text
-    data = await state.get_data()
-    user = data.get('user')
-    account = data.get('account')
+    # data = await state.get_data()
+    #user = data.get('user')
+    #account = data.get('account')
+    # rpc = data.get('rpc')
+    # abi = data.get('abi')
 
     bot_message = await message.answer(text="Проверка транзакции в блокчейне: ожидание", reply_markup=get_null_keyboard())
-    trn, error_text = get_transaction_blockchain(transaction_hash)
+    trn, error_text = get_transaction_blockchain(transaction_hash, trn_data["rpc"], trn_data["abi"])
 
     if trn is None:
         await bot_message.edit_text(
@@ -36,8 +38,8 @@ async def check_hash(message: Message, state: FSMContext, back_step: CallbackDat
                                           "Сохранение транзакции в базе данных: ожидание",
                                      reply_markup=get_null_keyboard())
 
-    trn.owner = user.id
-    trn.account_id = account.id
+    trn.owner = trn_data["user"].id
+    trn.account_id = trn_data["account"].id
 
     ok, error_text = save_transaction(trn)
 
@@ -52,7 +54,6 @@ async def check_hash(message: Message, state: FSMContext, back_step: CallbackDat
                                           "Сохранение транзакции в базе данных: OK\n"
                                           "Транзакция подтверждена\n\n",
                                      reply_markup=get_null_keyboard())
-    await state.update_data(callback=None)
     return trn
 
 
@@ -67,9 +68,9 @@ async def replenish_account(account: Account, transaction: Transaction, message:
                               f"Аккаунт пополнения: {account.id}")
 
 
-def get_transaction_blockchain(transaction_hash: str):
+def get_transaction_blockchain(transaction_hash: str, rpc: str, abi: str):
     try:
-        trn = get_transaction(transaction_hash)
+        trn = get_transaction(transaction_hash, rpc, abi)
     except TransactionNotFound:
         text = "Ошибка: Транзакция не найдена в блокчейне."
         return None, text

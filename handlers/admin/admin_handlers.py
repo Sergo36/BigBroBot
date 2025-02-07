@@ -14,9 +14,11 @@ from handlers.nodes import create_server
 
 router = Router()
 
+#              @repinSS   @sirvmasle @beta
+ADMIN_USERS = {502691086, 250812500, 858649134}
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     Command(commands=["admin"]))
 async def admin(message: Message):
     kb = [
@@ -31,14 +33,14 @@ async def admin(message: Message):
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     Command(commands=["version"]))
 async def version(message: Message):
     await message.answer("1.0.2")
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     Command(commands=["changelog"]))
 async def changelog(message: Message):
     await message.answer(text="# Change Log\n"
@@ -59,20 +61,16 @@ async def changelog(message: Message):
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     Command(commands=["install"]))
 async def install(message: Message, state: FSMContext):
     await state.set_state(States.manual_install)
     await message.answer("Введите идентификационный номер ноды")
 
 
-# async def callback_function(text: str, message: Message):
-#     await message.answer(text)
-
-
 @router.message(
     States.manual_install,
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     F.text.regexp('^[0-9]+$'))
 async def node_select_for_install(
         message: Message):
@@ -81,7 +79,7 @@ async def node_select_for_install(
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     Command(commands=["order"]))
 async def order(message: Message, state: FSMContext):
     await state.set_state(States.manual_order)
@@ -90,7 +88,7 @@ async def order(message: Message, state: FSMContext):
 
 @router.message(
     States.manual_order,
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     F.text.regexp('^[0-9]+$'))
 async def node_select_for_order(
         message: Message):
@@ -117,7 +115,7 @@ async def node_select_for_order(
 
 
 @router.message(
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     Command(commands=["overview"]))
 async def install(message: Message, state: FSMContext):
     await state.set_state(States.manual_overview)
@@ -126,7 +124,7 @@ async def install(message: Message, state: FSMContext):
 
 @router.message(
     States.manual_overview,
-    F.from_user.id.in_({502691086, 250812500, 658498973}),
+    F.from_user.id.in_(ADMIN_USERS),
     F.text.regexp('^[0-9]+$'))
 async def node_select_for_overview(
         message: Message,

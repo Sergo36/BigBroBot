@@ -14,19 +14,22 @@ from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.notification_callback_factory import NotificationCallbackFactory
+from callbacks.token_select_callback_factory import TokenSelectCallbackFactory
 from data.models.account import Account
 from data.models.common_node_data import CommonNodeData
 from data.models.node import Node
 from data.models.node_data import NodeData
 from data.models.node_payments import NodePayments
 from data.models.node_type import NodeType
+from data.models.payment_chain import PaymentChain
 from data.models.payment_data import PaymentData
+from data.models.payment_token import PaymentToken
 from data.models.server_configuration import ServerConfiguration
 from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
     get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node, \
-    get_keyboard_for_nodes_menu
+    get_keyboard_for_nodes_menu, get_keyboard_for_select_token
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
 from services.hostings.contabo import create_server as create_server_contabo
@@ -118,7 +121,7 @@ async def notification_payment(
     States.nodes,
     NodesCallbackFactory.filter(F.action == "cash_payment"))
 async def nodes_payment(callback: types.CallbackQuery, state: FSMContext):
-    await payment(callback, state)
+    await token_payment_select(callback, state)
 
 
 @router.callback_query(
@@ -148,6 +151,54 @@ async def account_payment(callback: types.CallbackQuery, state: FSMContext, noti
     )
 
 
+async def token_payment_select(callback: types.CallbackQuery, state: FSMContext):
+    tokens = (PaymentToken.select(
+        PaymentToken.id,
+        PaymentToken.token_name,
+        PaymentChain.chain_name)
+        .join(PaymentChain, on=(PaymentToken.chain_id == PaymentChain.id))
+        .where(PaymentToken.obsolete == False)
+        .namedtuples())
+    text = "Выберете токен для оплаты"
+    await callback.message.answer(
+        text=text,
+        parse_mode=ParseMode.MARKDOWN_V2,
+        reply_markup=get_keyboard_for_select_token(tokens),
+    )
+    await callback.answer()
+
+
+@router.callback_query(
+    States.nodes,
+    TokenSelectCallbackFactory.filter(F.action =="select_token"))
+async def payment_throw_token(
+        callback: types.CallbackQuery,
+        callback_data: TokenSelectCallbackFactory,
+        state: FSMContext):
+    token = PaymentToken.get(PaymentToken.id == callback_data.token_id)
+    token_name = token.token_name
+    chain_name = token.chain_id.chain_name
+    wallet_address = token.chain_id.wallet_address
+    data = await state.get_data()
+    node = data.get('node')
+    node_price = custom_round(node.cost / token.token_price)
+
+    text = f"Для оплаты, переведите `{node_price}` {token_name} в сети {chain_name} на адрес `{wallet_address}`\n\n" \
+           f"После подтверждения транзакции сетью, отправьте хеш транзакции ответным сообщением\n"
+
+    await callback.message.answer(
+        text=text,
+        parse_mode=ParseMode.MARKDOWN_V2,
+        reply_markup=get_keyboard_for_node_extended_information(node),
+    )
+
+    #await state.update_data(callback=callback)
+    await state.update_data(abi=token.abi)
+    await state.update_data(rpc=token.chain_id.rpc_address)
+
+    await callback.answer()
+
+
 async def payment(callback: types.CallbackQuery, state: FSMContext):
     wallet_address = PaymentData.get(PaymentData.active == True).wallet_address
     data = await state.get_data()
@@ -167,6 +218,16 @@ async def payment(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+def custom_round(number):
+    num_str = f"{number:.18f}"
+    if '.' in num_str:
+        fractional_part = num_str.split('.')[1].lstrip('0')
+        leading_zeros = len(num_str.split('.')[1]) - len(fractional_part)
+        precision = leading_zeros + 3
+        return round(number, precision)
+    return number
+
+
 @router.message(
     States.nodes,
     F.text.regexp('0[x][0-9a-fA-F]{64}'))
@@ -175,7 +236,15 @@ async def transaction_handler(message: Message, state: FSMContext, notifier: Tel
     node = data.get('node')
     account = data.get('account')
     back_step = NodesCallbackFactory(action="select_node", node_id=node.id)
-    trn = await check_hash(message, state, back_step)
+
+    trn_data = {
+        "user" : data.get('user'),
+        "account" : data.get('account'),
+        "rpc" : data.get('rpc'),
+        "abi" : data.get('abi')
+    }
+
+    trn = await check_hash(message, trn_data, back_step)
     if not (trn is None):
         await replenish_account(account, trn, message)
         await make_payment(account, node, message)
