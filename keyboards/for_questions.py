@@ -4,6 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
+from callbacks.payments_callback_factory import PaymentsCallbackFactory
 from callbacks.order_callback_factory import OrderCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
 
@@ -178,4 +179,15 @@ def get_keyboard_for_order_confirm(node) -> ReplyKeyboardMarkup:
         text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu"))
     kb.adjust(1, 1)
+    return kb.as_markup(resize_keyboard=True)
+
+
+def get_keyboard_for_payments_type(payments, node):
+    kb = InlineKeyboardBuilder()
+    for pay in payments:
+        kb.button(text=f"{pay.contract_name}", callback_data=PaymentsCallbackFactory(payment_id=pay.id))
+
+    kb.button(text="Назад к выбранной ноде", callback_data=NodesCallbackFactory(
+        action="select_node", node_id=node.id))
+    kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)

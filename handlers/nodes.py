@@ -13,6 +13,7 @@ from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
 from callbacks.nodes_callback_factory import NodesCallbackFactory
+from callbacks.payments_callback_factory import PaymentsCallbackFactory
 from callbacks.notification_callback_factory import NotificationCallbackFactory
 from data.models.account import Account
 from data.models.common_node_data import CommonNodeData
@@ -26,7 +27,7 @@ from handlers.db_viewer.viewer import show_data
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.for_questions import get_keyboard_for_node_instance, get_keyboard_for_node_extended_information, \
     get_keyboard_for_account_node_payment, get_keyboard_for_obsolete_node, get_keyboard_for_after_obsolete_node, \
-    get_keyboard_for_nodes_menu
+    get_keyboard_for_nodes_menu, get_keyboard_for_payments_type
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_verify
 from middleware.user import UsersMiddleware
 from services.hostings.contabo import create_server as create_server_contabo
@@ -61,7 +62,7 @@ SPECIAL_CHARS = [
 ]
 
 
-def escapeMarkdown(text: str):
+def escape_markdown(text: str):
     for char in SPECIAL_CHARS:
         text = text.replace(char, f'\\{char}')
     return text
@@ -75,7 +76,6 @@ async def nodes_menu(
     await callback.message.edit_text(
         text="Выберете раздел из списка ниже:",
         reply_markup=get_keyboard_for_nodes_menu())
-
 
 
 @router.callback_query(
@@ -111,14 +111,14 @@ async def notification_payment(
     node = Node.get(Node.id == callback_data.node_id)
     await state.update_data(node=node)
     await state.set_state(States.nodes)
-    await payment(callback, state)
+    await chose_payment(callback, state)
 
 
 @router.callback_query(
     States.nodes,
     NodesCallbackFactory.filter(F.action == "cash_payment"))
 async def nodes_payment(callback: types.CallbackQuery, state: FSMContext):
-    await payment(callback, state)
+    await chose_payment(callback, state)
 
 
 @router.callback_query(
@@ -148,15 +148,34 @@ async def account_payment(callback: types.CallbackQuery, state: FSMContext, noti
     )
 
 
-async def payment(callback: types.CallbackQuery, state: FSMContext):
-    wallet_address = PaymentData.get(PaymentData.active == True).wallet_address
+async def chose_payment(callback: types.CallbackQuery, state: FSMContext):
+    active_payments = (PaymentData
+                       .select(PaymentData.id,
+                               PaymentData.contract_name)
+                       .where(PaymentData.active == True))
+
     data = await state.get_data()
     node = data.get('node')
 
-    photo = FSInputFile(config.FILE_BASE_PATH + f'qr_codes/{wallet_address}.png')
+    await callback.message.edit_text(
+        text="Выберите токен для оплаты",
+        reply_markup=get_keyboard_for_payments_type(active_payments, node))
+    await callback.answer()
+
+
+@router.callback_query(
+    PaymentsCallbackFactory.filter()
+)
+async def payment(callback: types.CallbackQuery, callback_data: PaymentsCallbackFactory, state: FSMContext):
+    payment_data = PaymentData.get(PaymentData.id == callback_data.payment_id)
+    await state.update_data(payment_data=payment_data)
+    data = await state.get_data()
+    node = data.get('node')
+
+    photo = FSInputFile(config.FILE_BASE_PATH + f'qr_codes/{payment_data.wallet_address}.png')
     await callback.message.answer_photo(photo=photo)
 
-    text = f"Для оплаты, переведите `{node.cost}` USDT в сети BEP20 на адрес `{wallet_address}`\n\n" \
+    text = f"Для оплаты, переведите `{node.cost}` {payment_data.contract_name} в сети BEP20 на адрес `{payment_data.wallet_address}`\n\n" \
            f"После подтверждения транзакции сетью, отправьте хеш транзакции ответным сообщением\n"
     await callback.message.answer(
         text=text,
@@ -211,10 +230,10 @@ async def information_node(callback: types.CallbackQuery, state: FSMContext):
         if match:
             link_name = re.search(r'\[\S*\]', data.data)
             link_data = re.search(r'\(\S*\)', data.data)
-            value = (f"[{escapeMarkdown(data.data[link_name.regs[0][0] +1 :link_name.regs[0][1] -1])}]"
-                     f"({escapeMarkdown(data.data[link_data.regs[0][0] +1 :link_data.regs[0][1] -1])})")
+            value = (f"[{escape_markdown(data.data[link_name.regs[0][0] + 1:link_name.regs[0][1] - 1])}]"
+                     f"({escape_markdown(data.data[link_data.regs[0][0] + 1:link_data.regs[0][1] - 1])})")
         else:
-            value = f"`{escapeMarkdown(data.data)}`"
+            value = f"`{escape_markdown(data.data)}`"
 
         text += f"\n*{data.name}*: {value}"
 

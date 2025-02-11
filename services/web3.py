@@ -15,7 +15,7 @@ def get_transaction(transaction_hash: str) -> Transaction:
     contract = web3.eth.contract(contract_address, abi=config.ERC20_ABI)
     token_decimals = contract.functions.decimals().call()
 
-    return Transaction().initialisation_transaction(transaction_hash, token_decimals, txn)
+    return Transaction().initialisation_transaction(txn, transaction_hash, token_decimals)
 
 
 def get_block_date(block_hash: str):
@@ -26,7 +26,12 @@ def get_block_date(block_hash: str):
     return block.timestamp
 
 
-def transaction_valid(transaction: Transaction) -> bool:
-    wallet_address = HexBytes(PaymentData.get(PaymentData.active == True).wallet_address)
-    transaction_to = HexBytes(transaction.transaction_to)
-    return not (False in ([_a == _b for _a, _b in zip(reversed(wallet_address), reversed(transaction_to))]))
+def hash_equal(first: str, second: str):
+    first_hash = HexBytes(first)
+    second_hash = HexBytes(second)
+    res = True
+    for _a, _b in zip(reversed(first_hash), reversed(second_hash)):
+        if _a != _b:
+            res = False
+            break
+    return res

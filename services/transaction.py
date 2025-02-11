@@ -12,7 +12,7 @@ from data.models.transaction import Transaction
 from keyboards.common_keyboards import get_null_keyboard
 from keyboards.transaction_keyboards import get_keyboard_for_transaction_fail
 
-from services.web3 import get_transaction, transaction_valid, get_block_date
+from services.web3 import get_transaction, get_block_date, hash_equal
 from eth_utils.units import units
 
 
@@ -21,6 +21,7 @@ async def check_hash(message: Message, state: FSMContext, back_step: CallbackDat
     data = await state.get_data()
     user = data.get('user')
     account = data.get('account')
+    payment_data = data.get('payment_data')
 
     bot_message = await message.answer(text="Проверка транзакции в блокчейне: ожидание", reply_markup=get_null_keyboard())
     trn, error_text = get_transaction_blockchain(transaction_hash)
@@ -35,6 +36,15 @@ async def check_hash(message: Message, state: FSMContext, back_step: CallbackDat
     await bot_message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
                                           "Сохранение транзакции в базе данных: ожидание",
                                      reply_markup=get_null_keyboard())
+
+    if (not hash_equal(trn.contract_address, payment_data.contract_address)
+            or not hash_equal(trn.transaction_to, payment_data.wallet_address)):
+        await bot_message.edit_text(text="Проверка транзакции в блокчейне: OK\n"
+                                         "Сохранение транзакции в базе данных: провал\n"
+                                         f"\t\tТранзакция не валидна. Адрес получателя или контракт не корректны",
+                                    reply_markup=get_keyboard_for_transaction_fail(back_step))
+        return None
+
 
     trn.owner = user.id
     trn.account_id = account.id
@@ -75,10 +85,6 @@ def get_transaction_blockchain(transaction_hash: str):
         return None, text
     except Exception:
         text = "Ошибка: Непредвиденная ошибка."
-        return None, text
-
-    if not transaction_valid(trn):
-        text = "Ошибка: Транзакция не валидна."
         return None, text
 
     try:

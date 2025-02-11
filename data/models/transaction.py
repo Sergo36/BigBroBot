@@ -9,12 +9,14 @@ class TransactionValue(TextField):
     def python_value(self, value):
         return f'{(int(value, base=16) / 1000000000000000000):5.2f}'
 
+
 class Transaction(BaseModel):
     transaction_hash = TextField(column_name='transaction_hash', primary_key=True)
     block_hash = TextField(column_name='block_hash')
     block_number = TextField(column_name='block_number')
     transaction_from = TextField(column_name='transaction_from')
     transaction_to = TextField(column_name='transaction_to')
+    contract_address = TextField(column_name='contract_address', null=True)
     transaction_date = TimestampField(column_name='transaction_date')
     status = BooleanField(column_name='status')
     owner = ForeignKeyField(column_name='owner', model=User)
@@ -25,12 +27,13 @@ class Transaction(BaseModel):
     class Meta:
         table_name = 'transactions'
 
-    def initialisation_transaction(self, transaction_hash, decimals, txn):
+    def initialisation_transaction(self, txn, transaction_hash, decimals ):
         self.transaction_hash = transaction_hash
         self.block_hash = txn['blockHash'].hex()
         self.block_number = txn['blockNumber']
         self.transaction_from = txn.logs[0].topics[1].hex()
         self.transaction_to = txn.logs[0].topics[2].hex()
+        self.contract_address = txn.logs[0].address
         self.status = bool(txn['status'])
         self.decimals = decimals
         self.owner = 0
