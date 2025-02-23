@@ -1,15 +1,17 @@
 from aiogram import Router, types, F
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 
+import config
 from botStates import States
 from callbacks.account_callback_factory import AccountCallbackFactory
+from callbacks.payments_callback_factory import PaymentsCallbackFactory
 from callbacks.transactions_callback_factory import TransactionsCallbackFactory
 from data.models.account import Account
 from data.models.payment_data import PaymentData
 from handlers.account.keyboards import get_keyboard_for_account_list, get_keyboard_for_account_instance, \
-    get_keyboard_for_replenish_account
+    get_keyboard_for_replenish_account, get_keyboard_for_chose_token
 from services.transaction import check_hash, replenish_account
 
 router = Router()
@@ -82,7 +84,7 @@ async def account_answer(account: Account, callback: types.CallbackQuery):
 async def internal_replenish_account(
         callback: types.CallbackQuery,
         state: FSMContext):
-    await payment(callback, state)
+    await chose_payment(callback, state)
 
 
 @router.callback_query(
@@ -94,17 +96,39 @@ async def try_again_replenish(
     await payment(callback, state)
 
 
-async def payment(callback: types.CallbackQuery, state: FSMContext):
-    wallet_address = PaymentData.get(PaymentData.active == True).wallet_address
+async def chose_payment(callback: types.CallbackQuery, state: FSMContext):
+    active_payments = (PaymentData
+                       .select(PaymentData.id,
+                               PaymentData.contract_name)
+                       .where(PaymentData.active == True))
 
-    text = f"Для пополнения счета переведите USDT в сети BEP20 на адрес `{wallet_address}`\n\n" \
-           f"После подтверждения транзакции сетью, отправьте хеш транзакции ответным сообщением\n"
     await callback.message.edit_text(
+        text="Выберите токен для оплаты",
+        reply_markup=get_keyboard_for_chose_token(active_payments))
+    await callback.answer()
+
+
+@router.callback_query(
+    States.account,
+    PaymentsCallbackFactory.filter()
+)
+async def payment(callback: types.CallbackQuery, callback_data: PaymentsCallbackFactory, state: FSMContext):
+    payment_data = PaymentData.get(PaymentData.id == callback_data.payment_id)
+    await state.update_data(payment_data=payment_data)
+
+    photo = FSInputFile(config.FILE_BASE_PATH + f'qr_codes/{payment_data.wallet_address}.png')
+    await callback.message.answer_photo(photo=photo)
+
+    text = f"Для пополнения счета переведите {payment_data.contract_name} в сети BEP20 на адрес `{payment_data.wallet_address}`\n\n" \
+           f"После подтверждения транзакции сетью, отправьте хеш транзакции ответным сообщением\n"
+
+    await callback.message.answer(
         text=text,
         parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=get_keyboard_for_replenish_account(),
     )
     await state.update_data(callback=callback)
+    await callback.answer()
 
 
 @router.message(

@@ -164,6 +164,7 @@ async def chose_payment(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
+    States.nodes,
     PaymentsCallbackFactory.filter()
 )
 async def payment(callback: types.CallbackQuery, callback_data: PaymentsCallbackFactory, state: FSMContext):

@@ -3,6 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from callbacks.account_callback_factory import AccountCallbackFactory
 from callbacks.main_callback_factory import MainCallbackFactory
+from callbacks.payments_callback_factory import PaymentsCallbackFactory
 
 
 def get_keyboard_for_account_list(query) -> ReplyKeyboardMarkup:
@@ -25,6 +26,18 @@ def get_keyboard_for_account_instance(account_id) -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="Пополнить", callback_data=AccountCallbackFactory(
         action="replenish_account", account_id=account_id))
+    kb.button(text="Главное меню", callback_data=MainCallbackFactory(
+        action="main_menu"))
+    kb.adjust(1)
+    return kb.as_markup(resize_keyboard=True)
+
+
+def get_keyboard_for_chose_token(payments) -> ReplyKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for pay in payments:
+        kb.button(text=f"{pay.contract_name}", callback_data=PaymentsCallbackFactory(payment_id=pay.id))
+    kb.button(text="Назад", callback_data=AccountCallbackFactory(
+        action="back_step_account"))
     kb.button(text="Главное меню", callback_data=MainCallbackFactory(
         action="main_menu"))
     kb.adjust(1)
