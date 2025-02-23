@@ -93,7 +93,7 @@ async def internal_replenish_account(
 async def try_again_replenish(
         callback: types.CallbackQuery,
         state: FSMContext):
-    await payment(callback, state)
+    await chose_payment(callback, state)
 
 
 async def chose_payment(callback: types.CallbackQuery, state: FSMContext):
