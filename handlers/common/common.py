@@ -13,7 +13,8 @@ from data.models.node import Node
 from handlers.common.keyboards import get_keyboard_for_report, get_keyboard_for_proxy_device_list
 
 from keyboards.for_questions import get_keyboard_for_node_type, \
-    get_keyboard_for_nodes_list, get_keyboard_for_empty_nodes_list, get_keyboard_main_menu
+    get_keyboard_for_nodes_list, get_keyboard_for_empty_nodes_list, get_keyboard_main_menu, \
+    get_keyboard_for_nodes_list_archive
 from middleware.user import UsersMiddleware
 
 from botStates import States, ProxyStates
@@ -66,6 +67,31 @@ async def nodes(callback: types.CallbackQuery, state: FSMContext):
     if len(user_nodes) > 0:
         text = "Выберете ноду из списка ниже:"
         keyboard = get_keyboard_for_nodes_list(user_nodes)
+    else:
+        text = 'Список нод пуст. Закажите первую!!!'
+        keyboard = get_keyboard_for_empty_nodes_list()
+
+    await callback.message.edit_text(
+        text=text,
+        reply_markup=keyboard
+    )
+
+
+@router.callback_query(NodesCallbackFactory.filter(F.action == "archive"))
+async def archive_nodes(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    user = data.get('user')
+
+    user_nodes = (
+        Node.select(Node.id, NodeType.name)
+        .join(NodeType, on=(Node.type == NodeType.id))
+        .where(Node.owner == user.id)
+        .order_by(Node.id)
+        .namedtuples())
+    keyboard: None
+    if len(user_nodes) > 0:
+        text = "Выберете ноду из списка ниже:"
+        keyboard = get_keyboard_for_nodes_list_archive(user_nodes)
     else:
         text = 'Список нод пуст. Закажите первую!!!'
         keyboard = get_keyboard_for_empty_nodes_list()

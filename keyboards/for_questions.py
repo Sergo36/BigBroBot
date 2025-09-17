@@ -41,18 +41,40 @@ def get_keyboard_for_nodes_menu():
 
 def get_keyboard_for_nodes_list(query) -> ReplyKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    index = 1
+    add_node_buttons(query, kb)
+    kb.adjust(2)
+    add_archive_button(kb)
+    add_main_menu_button(kb)
+    return kb.as_markup()
+
+
+def get_keyboard_for_nodes_list_archive(query) -> ReplyKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    add_node_buttons(query, kb)
+    kb.adjust(2)
+    add_main_menu_button(kb)
+    return kb.as_markup()
+
+
+def add_node_buttons(query, kb):
     for row in query:
         kb.button(
-            text=f"{index}) {row.name}",
+            text=f"({row.id}) {row.name}",
             callback_data=NodesCallbackFactory(action="select_node", node_id=row.id))
-        index = index + 1
-    kb.adjust(2)
+
+
+def add_archive_button(kb):
+    archive_button = InlineKeyboardButton(
+        text="Архив нод",
+        callback_data=NodesCallbackFactory(action="archive").pack())
+    kb.row(archive_button)
+
+
+def add_main_menu_button(kb):
     mm_button = InlineKeyboardButton(
         text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu").pack())
     kb.row(mm_button)
-    return kb.as_markup()
 
 
 def get_keyboard_for_empty_nodes_list() -> ReplyKeyboardMarkup:
