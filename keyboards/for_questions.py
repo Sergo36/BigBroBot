@@ -63,6 +63,28 @@ def add_node_buttons(query, kb):
             callback_data=NodesCallbackFactory(action="select_node", node_id=row.id))
 
 
+def get_keyboard_for_empty_nodes_list() -> ReplyKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    add_new_order_button(kb)
+    add_archive_button(kb)
+    add_main_menu_button(kb)
+    return kb.as_markup()
+
+
+def get_keyboard_for_empty_nodes_list_archive() -> ReplyKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    add_new_order_button(kb)
+    add_main_menu_button(kb)
+    return kb.as_markup()
+
+
+def add_new_order_button(kb):
+    archive_button = InlineKeyboardButton(
+        text="Новый заказ",
+        callback_data=OrderCallbackFactory(action="new_order").pack())
+    kb.row(archive_button)
+
+
 def add_archive_button(kb):
     archive_button = InlineKeyboardButton(
         text="Архив нод",
@@ -75,19 +97,6 @@ def add_main_menu_button(kb):
         text="Главное меню",
         callback_data=MainCallbackFactory(action="main_menu").pack())
     kb.row(mm_button)
-
-
-def get_keyboard_for_empty_nodes_list() -> ReplyKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(
-        text="Новый заказ",
-        callback_data=OrderCallbackFactory(action="new_order")
-    )
-    kb.button(
-        text="Главное меню",
-        callback_data=MainCallbackFactory(action="main_menu")
-    )
-    return kb.as_markup()
 
 
 def get_keyboard_for_node_instance() -> ReplyKeyboardMarkup:

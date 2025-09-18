@@ -14,7 +14,7 @@ from handlers.common.keyboards import get_keyboard_for_report, get_keyboard_for_
 
 from keyboards.for_questions import get_keyboard_for_node_type, \
     get_keyboard_for_nodes_list, get_keyboard_for_empty_nodes_list, get_keyboard_main_menu, \
-    get_keyboard_for_nodes_list_archive
+    get_keyboard_for_nodes_list_archive, get_keyboard_for_empty_nodes_list_archive, get_keyboard_for_nodes_menu
 from middleware.user import UsersMiddleware
 
 from botStates import States, ProxyStates
@@ -29,7 +29,7 @@ router.callback_query.middleware(UsersMiddleware())
 async def cmd_start(message: Message):
     await message.answer(
         text="Выберете раздел из списка ниже:",
-        reply_markup=get_keyboard_main_menu()
+        reply_markup=get_keyboard_for_nodes_menu()
     )
 
 
@@ -39,7 +39,7 @@ async def callback_start(
 ):
     await callback.message.edit_text(
         text="Выберете раздел из списка ниже:",
-        reply_markup=get_keyboard_main_menu())
+        reply_markup=get_keyboard_for_nodes_menu())
 
 
 @router.callback_query(MainCallbackFactory.filter(F.action == "new_main_menu"))
@@ -93,8 +93,8 @@ async def archive_nodes(callback: types.CallbackQuery, state: FSMContext):
         text = "Выберете ноду из списка ниже:"
         keyboard = get_keyboard_for_nodes_list_archive(user_nodes)
     else:
-        text = 'Список нод пуст. Закажите первую!!!'
-        keyboard = get_keyboard_for_empty_nodes_list()
+        text = 'Список нод пуст. Закажите новую!!!'
+        keyboard = get_keyboard_for_empty_nodes_list_archive()
 
     await callback.message.edit_text(
         text=text,
