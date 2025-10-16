@@ -10,6 +10,7 @@ from aiogram.types import FSInputFile, Message
 
 import config
 from botStates import States, SubSpace, InteractionState
+from bot_logging.telegram_notifier import TelegramNotifier
 from callbacks.nodes_callback_factory import NodesCallbackFactory
 from callbacks.task_callback_factory import TaskCallbackFactory, NodeDataSetCallback
 from data.models.common_node_interaction import CommonNodeInteraction
@@ -470,14 +471,15 @@ async def common_node_data_set(
 
 @router.message(
     InteractionState.common_handler)
-async def set_validator_name(message: Message, state: FSMContext):
+async def set_validator_name(message: Message, state: FSMContext, notifier: TelegramNotifier):
     data = await state.get_data()
     interaction_data: str = data.get('interaction_data')
     if re.fullmatch(f'{interaction_data.split(":")[0]}', message.text) is not None:
         node = data.get("node")
+        data_name = interaction_data.split(':')[1]
         NodeData.get_or_create(
             data=message.text,
-            name=interaction_data.split(':')[1],
+            name=data_name,
             node_id=node.id,
             defaults={
                 'type': 1,
@@ -486,6 +488,7 @@ async def set_validator_name(message: Message, state: FSMContext):
         await message.answer(
             text=f'{interaction_data.split(":")[3]}',
             reply_markup=get_keyboard_default_interaction())
+        await notifier.emit("BigBroBot", f"Set {data_name} for node_id {node.id}")
     else:
         await message.answer(
             text=f'{interaction_data.split(":")[4]}',
